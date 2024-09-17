@@ -1,6 +1,10 @@
 #pragma once
 
+#include <amarula/netlink/exception.h>
+
+#include <cstdint>
 #include <optional>
+#include <ranges>
 #include <string>
 
 struct nl_addr;
@@ -42,8 +46,17 @@ public:
 	Address & operator=(Address &&);
 	~Address();
 
+	/// Get binary representation of the address
+	std::ranges::subrange<const uint8_t *> binary() const;
+
+	/// Get prefix length
+	int prefixlen() const;
+	/// Set prefix length
+	Address & prefixlen(int);
+
 	/// Get the raw libnl nl_addr pointer
 	const nl_addr * get() const { return addr; }
+	nl_addr * get() { return addr; }
 
 private:
 	nl_addr * addr;
@@ -86,6 +99,8 @@ protected:
 
 struct rtnl_addr;
 struct rtnl_link;
+struct rtnl_nexthop;
+struct rtnl_route;
 
 namespace amarula::netlink {
 
@@ -147,6 +162,11 @@ public:
 	/// Get interface index of the link object, or 0 if not set
 	int ifindex() const;
 
+	/// Get operational status
+	uint8_t operstate() const;
+	/// Set operational status
+	RouteLink & operstate(uint8_t);
+
 	/// Get the raw libnll rtnl_link pointer
 	rtnl_link * get() { return link; }
 	/// Get the raw libnll rtnl_link pointer
@@ -154,6 +174,73 @@ public:
 
 private:
 	rtnl_link * link;
+};
+
+/// Hop object for routing
+class NextHop
+{
+public:
+	NextHop();
+	NextHop(const NextHop &);
+	NextHop & operator=(const NextHop &);
+	NextHop(NextHop &&);
+	NextHop & operator=(NextHop &&);
+	~NextHop();
+
+	/// Get weight
+	uint8_t weight() const;
+	/// Set weight
+	NextHop & weight(uint8_t);
+
+	/// Get interface index
+	int ifindex() const;
+	/// Set interface index
+	NextHop & ifindex(int index);
+
+	/// Get gateway address
+	optional<Address> gateway() const;
+	/// Set gateway address
+	NextHop & gateway(optional<Address>);
+
+	/// Get the raw libnl rtnl_nexthop pointer
+	const rtnl_nexthop * get() const { return nexthop; }
+	rtnl_nexthop * take();
+
+private:
+	rtnl_nexthop * nexthop;
+};
+
+/// Netlink route
+class Route
+{
+public:
+	Route();
+	Route(rtnl_route *);
+	Route(const Route &) = delete;
+	Route & operator=(const Route &) = delete;
+	Route(Route &&);
+	Route & operator=(Route &&);
+	~Route();
+
+	/// Get scope
+	uint8_t scope() const;
+	/// Set scope
+	Route & scope(uint8_t);
+
+	/// Get destination address
+	Address dst() const;
+	/// Set destination address
+	Route & dst(Address &&);
+
+	/// Add next hop
+	Route & add(const NextHop &);
+	/// Add next hop
+	Route & add(NextHop &&);
+
+	const rtnl_route * get() const { return route; }
+
+private:
+	rtnl_route * route;
 };
 
 /// Socket opened for the route netlink protocol
@@ -168,13 +255,19 @@ public:
 	 * All the necessary information like address, prefix length or
 	 * interface must be configured on the passed RouteAddress object.
 	 */
-	void add(const RouteAddress &);
+	RouteSocket & add(const RouteAddress &);
 
 	/// Delete matched protocol address(es)
 	/**
 	 * Deletes all addresses matched by given RouteAddress object.
 	 */
-	void del(const RouteAddress &);
+	RouteSocket & del(const RouteAddress &);
+
+	/// Add new route
+	RouteSocket & add(const Route &);
+
+	/// Delete route
+	RouteSocket & del(const Route &);
 };
 
 /// Cache containing information about available links (interfaces)

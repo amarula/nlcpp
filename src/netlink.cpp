@@ -3,8 +3,10 @@
 #include <netlink/netlink.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/route.h>
+#include <ranges>
 #include <stdexcept>
 
+using std::move;
 using std::nullopt;
 
 namespace amarula::netlink {
@@ -27,17 +29,16 @@ Socket::~Socket()
 }
 
 Address::Address(nl_addr * addr_):
-	addr(addr_)
+	addr { nl_addr_clone(addr_) }
 {
-	if (addr)
-		nl_addr_get(addr);
+	if (!addr)
+		throw std::runtime_error("Failed to copy address");
 }
 
 Address::Address(const string & str)
 {
 	int err = nl_addr_parse(str.c_str(), AF_UNSPEC, &addr);
-	if (err < 0)
-		throw std::invalid_argument("Failed to parse address \"" + str + "\": " + nl_geterror(err));
+	Exception::throwCode("Failed to parse address \"" + str + "\": ", err);
 }
 
 Address::Address(const Address & other):
@@ -71,6 +72,23 @@ Address & Address::operator=(Address && other)
 Address::~Address()
 {
 	nl_addr_put(addr);
+}
+
+std::ranges::subrange<const uint8_t *> Address::binary() const
+{
+	auto * ptr = static_cast<const uint8_t *>(nl_addr_get_binary_addr(addr));
+	return std::ranges::subrange(ptr, ptr + nl_addr_get_len(addr));
+}
+
+int Address::prefixlen() const
+{
+	return nl_addr_get_prefixlen(addr);
+}
+
+Address & Address::prefixlen(int prefixlen)
+{
+	nl_addr_set_prefixlen(addr, prefixlen);
+	return *this;
 }
 
 Cache::Cache(nl_cache * cache_):
@@ -115,8 +133,7 @@ Cache::~Cache()
 CacheManager::CacheManager(int protocol)
 {
 	int err = nl_cache_mngr_alloc(nullptr, protocol, NL_AUTO_PROVIDE, &mngr);
-	if (err < 0)
-		throw std::runtime_error(string("nl_cache_mngr_alloc failed: ") + nl_geterror(err));
+	Exception::throwCode("nl_cache_mngr_alloc failed", err);
 }
 
 CacheManager::~CacheManager()
@@ -183,7 +200,7 @@ Address RouteAddress::local() const
 
 RouteAddress & RouteAddress::local(const Address & laddr)
 {
-	rtnl_addr_set_local(addr, const_cast<nl_addr*>(laddr.get()));
+	rtnl_addr_set_local(addr, Address(laddr).get());
 	return *this;
 }
 
@@ -232,24 +249,208 @@ int RouteLink::ifindex() const
 	return rtnl_link_get_ifindex(link);
 }
 
+uint8_t RouteLink::operstate() const
+{
+	return rtnl_link_get_operstate(link);
+}
+
+RouteLink & RouteLink::operstate(uint8_t value)
+{
+	rtnl_link_set_operstate(link, value);
+	return *this;
+}
+
+
+NextHop::NextHop():
+	nexthop { rtnl_route_nh_alloc() }
+{
+	if (!nexthop)
+		throw std::runtime_error("Failed to allocate route netlink nexthop");
+}
+
+NextHop::NextHop(const NextHop & other):
+	nexthop { rtnl_route_nh_clone(other.nexthop) }
+{
+	if (!nexthop)
+		throw std::runtime_error("Failed to clone route netlink nexthop");
+}
+
+NextHop & NextHop::operator=(const NextHop & other)
+{
+	if (nexthop)
+		rtnl_route_nh_free(nexthop);
+	nexthop = rtnl_route_nh_clone(other.nexthop);
+	if (!nexthop)
+		throw std::runtime_error("Failed to clone route netlink nexthop");
+	return *this;
+}
+
+NextHop::NextHop(NextHop && other)
+{
+	nexthop = other.nexthop;
+	other.nexthop = nullptr;
+}
+
+NextHop & NextHop::operator=(NextHop && other)
+{
+	if (nexthop)
+		rtnl_route_nh_free(nexthop);
+	nexthop = other.nexthop;
+	other.nexthop = nullptr;
+	return *this;
+}
+
+NextHop::~NextHop()
+{
+	if (nexthop)
+		rtnl_route_nh_free(nexthop);
+}
+
+uint8_t NextHop::weight() const
+{
+	return rtnl_route_nh_get_weight(nexthop);
+}
+
+NextHop & NextHop::weight(uint8_t value)
+{
+	rtnl_route_nh_set_weight(nexthop, value);
+	return *this;
+}
+
+int NextHop::ifindex() const
+{
+	return rtnl_route_nh_get_ifindex(nexthop);
+}
+
+NextHop & NextHop::ifindex(int index)
+{
+	rtnl_route_nh_set_ifindex(nexthop, index);
+	return *this;
+}
+
+optional<Address> NextHop::gateway() const
+{
+	if (auto addr = rtnl_route_nh_get_gateway(nexthop))
+		return Address(addr);
+	return nullopt;
+}
+
+NextHop & NextHop::gateway(optional<Address> addr)
+{
+	auto cloned = addr ? nl_addr_clone(addr->get()) : nullptr;
+	rtnl_route_nh_set_gateway(nexthop, cloned);
+	nl_addr_put(cloned);
+	return *this;
+}
+
+rtnl_nexthop * NextHop::take()
+{
+	rtnl_nexthop * ptr = nexthop;
+	nexthop = nullptr;
+	return ptr;
+}
+
+
+Route::Route():
+	route { rtnl_route_alloc() }
+{
+	if (!route)
+		throw std::runtime_error("Failed to allocate route netlink route");
+}
+
+Route::Route(rtnl_route * route_):
+	route { route_ }
+{
+	if (route)
+		rtnl_route_get(route);
+}
+
+Route::Route(Route && other)
+{
+	route = other.route;
+	other.route = nullptr;
+}
+
+Route & Route::operator=(Route && other)
+{
+	rtnl_route_put(route);
+	route = other.route;
+	other.route = nullptr;
+	return *this;
+}
+
+Route::~Route()
+{
+	rtnl_route_put(route);
+}
+
+uint8_t Route::scope() const
+{
+	return rtnl_route_get_scope(route);
+}
+
+Route & Route::scope(uint8_t scope)
+{
+	rtnl_route_set_scope(route, scope);
+	return *this;
+}
+
+Address Route::dst() const
+{
+	return Address(rtnl_route_get_dst(route));
+}
+
+Route & Route::dst(Address && addr)
+{
+	int err = rtnl_route_set_dst(route, addr.get());
+	Exception::throwCode("rtnl_route_set_dst failed", err);
+	return *this;
+}
+
+Route & Route::add(const NextHop & nexthop)
+{
+	return add(NextHop(nexthop));
+}
+
+Route & Route::add(NextHop && nexthop)
+{
+	rtnl_route_add_nexthop(route, nexthop.take());
+	return *this;
+}
+
+
 RouteSocket::RouteSocket():
 	Socket(NETLINK_ROUTE)
 {}
 
 RouteSocket::~RouteSocket() = default;
 
-void RouteSocket::add(const RouteAddress & addr)
+RouteSocket & RouteSocket::add(const RouteAddress & addr)
 {
 	int err = rtnl_addr_add(sock, const_cast<rtnl_addr *>(addr.get()), 0);
-	if (err < 0)
-		throw std::runtime_error(string("rtnl_addr_add failed: ") + nl_geterror(err));
+	Exception::throwCode("rtnl_addr_add failed", err);
+	return *this;
 }
 
-void RouteSocket::del(const RouteAddress & addr)
+RouteSocket & RouteSocket::del(const RouteAddress & addr)
 {
 	int err = rtnl_addr_delete(sock, const_cast<rtnl_addr *>(addr.get()), 0);
-	if (err < 0)
-		throw std::runtime_error(string("rtnl_addr_delete failed: ") + nl_geterror(err));
+	Exception::throwCode("rtnl_addr_delete failed", err);
+	return *this;
+}
+
+RouteSocket & RouteSocket::add(const Route & route)
+{
+	int err = rtnl_route_add(sock, const_cast<rtnl_route *>(route.get()), NLM_F_EXCL);
+	Exception::throwCode("rtnl_route_add failed", err);
+	return *this;
+}
+
+RouteSocket & RouteSocket::del(const Route & route)
+{
+	int err = rtnl_route_delete(sock, const_cast<rtnl_route *>(route.get()), 0);
+	Exception::throwCode("rtnl_route_delete failed", err);
+	return *this;
 }
 
 RouteCacheManager::RouteCacheManager():
@@ -262,9 +463,7 @@ RouteLinkCache RouteCacheManager::linkCache()
 {
 	nl_cache * cache;
 	int err = nl_cache_mngr_add(mngr, "route/link", nullptr, nullptr, &cache);
-	if (err < 0)
-		throw std::runtime_error(string("nl_cache_mngr_add failed: ") + nl_geterror(err));
-
+	Exception::throwCode("nl_cache_mngr_add failed", err);
 	return RouteLinkCache(cache);
 }
 
@@ -308,7 +507,7 @@ RouteLinkCache::Iterator & RouteLinkCache::Iterator::operator++()
 
 RouteLinkCache::Iterator RouteLinkCache::Iterator::operator++(int)
 {
-	Iterator tmp = std::move(*this);
+	Iterator tmp = move(*this);
 	obj = RouteLink(reinterpret_cast<rtnl_link *>(nl_cache_get_next(reinterpret_cast<nl_object *>(tmp.obj.get()))));
 	return tmp;
 }

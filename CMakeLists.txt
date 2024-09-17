@@ -10,6 +10,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 add_library(amarula-netlink
+	src/exception.cpp
 	src/netlink.cpp
 )
 
@@ -17,7 +18,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(NL libnl-3.0)
 pkg_check_modules(NL_ROUTE libnl-route-3.0)
 
-target_include_directories(amarula-netlink PRIVATE
+target_include_directories(amarula-netlink PUBLIC
 	${NL_INCLUDE_DIRS}
 	${NL_ROUTE_INCLUDE_DIRS}
 )
