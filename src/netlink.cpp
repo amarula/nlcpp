@@ -1,4 +1,4 @@
-#include <amarula/netlink.h>
+#include <nlcpp.h>
 
 #include <netlink/netlink.h>
 #include <netlink/route/addr.h>
@@ -9,7 +9,7 @@
 using std::move;
 using std::nullopt;
 
-namespace amarula::netlink {
+namespace nl {
 
 Socket::Socket(int protocol)
 {

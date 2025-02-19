@@ -3,7 +3,7 @@
 #include <exception>
 #include <string>
 
-namespace amarula::netlink {
+namespace nl {
 
 using std::string;
 

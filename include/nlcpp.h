@@ -1,6 +1,6 @@
 #pragma once
 
-#include <amarula/netlink/exception.h>
+#include <nlcpp/exception.h>
 
 #include <cstdint>
 #include <optional>
@@ -13,7 +13,7 @@ struct nl_cache_mngr;
 struct nl_object;
 struct nl_sock;
 
-namespace amarula::netlink {
+namespace nl {
 
 using std::optional;
 using std::string;
@@ -102,7 +102,7 @@ struct rtnl_link;
 struct rtnl_nexthop;
 struct rtnl_route;
 
-namespace amarula::netlink {
+namespace nl {
 
 /// Address object used in the routing netlink protocol
 /**

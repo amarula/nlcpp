@@ -1,8 +1,8 @@
-#include <amarula/netlink/exception.h>
+#include <nlcpp/exception.h>
 
 #include <netlink/errno.h>
 
-namespace amarula::netlink {
+namespace nl {
 
 Exception::Exception(const string & prefix, int code):
 	msg { prefix + ": " + nl_geterror(code) }
