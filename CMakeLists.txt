@@ -12,6 +12,7 @@ endif()
 add_library(nlcpp
 	src/exception.cpp
 	src/netlink.cpp
+	src/route.cpp
 )
 
 find_package(PkgConfig REQUIRED)

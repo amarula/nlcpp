@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Classes representing netlink-specific exceptions
+ */
+
 #pragma once
 
 #include <exception>
