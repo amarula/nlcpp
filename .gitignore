@@ -1,2 +1,5 @@
 doc/
+build*/
+.cache/
 .test/
+compile_commands.json
