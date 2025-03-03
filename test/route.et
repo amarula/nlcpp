@@ -1,0 +1,9 @@
+module route
+
+test LinkList:
+    spawn as p
+    send "link-list" to p
+    expect from p:
+        /link-list-item [0-9]+ lo/
+        /link-list-item [0-9]+ ${p.node.ifname}/
+        /link-list-done/

@@ -32,3 +32,12 @@ target_link_libraries(nlcpp PUBLIC
 	${NL_LIBRARIES}
 	${NL_ROUTE_LIBRARIES}
 )
+
+
+add_executable(nlcpp-test-tool
+	src/test-tool.cpp
+)
+
+target_link_libraries(nlcpp-test-tool
+	nlcpp
+)
