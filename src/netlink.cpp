@@ -74,6 +74,13 @@ Address::~Address()
 	nl_addr_put(addr);
 }
 
+Address::operator string() const
+{
+	char buf[256];
+	nl_addr2str(addr, buf, sizeof(buf));
+	return string(buf);
+}
+
 std::ranges::subrange<const uint8_t *> Address::binary() const
 {
 	auto * ptr = static_cast<const uint8_t *>(nl_addr_get_binary_addr(addr));

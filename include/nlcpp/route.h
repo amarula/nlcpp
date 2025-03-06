@@ -25,6 +25,7 @@ class RouteAddress
 {
 public:
 	RouteAddress();
+	RouteAddress(rtnl_addr *);
 	RouteAddress(const RouteAddress &) = delete;
 	RouteAddress & operator=(const RouteAddress &) = delete;
 	RouteAddress(RouteAddress &&);
@@ -48,6 +49,8 @@ public:
 
 	/// Get the raw libnl rtnl_addr pointer
 	const rtnl_addr * get() const { return addr; }
+	/// Get the raw libnl rtnl_addr pointer
+	rtnl_addr * get() { return addr; }
 
 private:
 	rtnl_addr * addr;
@@ -65,7 +68,7 @@ public:
 	RouteLink & operator=(RouteLink &&);
 	~RouteLink();
 
-	operator bool() const { return bool(link); }
+	explicit operator bool() const { return bool(link); }
 
 	/// Get name of the link object, or nullopt if not specified
 	optional<string> name() const;
@@ -181,6 +184,65 @@ public:
 	RouteSocket & del(const Route &);
 };
 
+/// Cache containing information about network addresses
+/**
+ * The object can be iterated to get individual addresses.
+ */
+class RouteAddressCache : public Cache
+{
+public:
+	explicit RouteAddressCache(nl_cache * cache):
+		Cache(cache) {}
+
+	class Iterator : public Cache::Iterator
+	{
+	public:
+		using iterator_category = std::forward_iterator_tag;
+		using value_type        = const RouteAddress;
+		using pointer           = value_type *;
+		using reference         = value_type &;
+
+		Iterator(nl_object * obj);
+		Iterator(nl_object * obj, nl_object * filter);
+		Iterator(Iterator &&) = default;
+		Iterator & operator=(Iterator &&) = default;
+		~Iterator() = default;
+
+		reference operator*() const;
+		pointer operator->() const;
+
+		bool operator==(const Iterator &) const;
+		bool operator!=(const Iterator &) const;
+
+		Iterator & operator++();
+		Iterator operator++(int);
+
+	private:
+		RouteAddress obj;
+		RouteAddress filter;
+	};
+
+	Iterator begin() const;
+	Iterator end() const;
+
+	class Filtered
+	{
+	public:
+		Filtered(const RouteAddressCache & cache, RouteAddress && filter):
+			cache(cache), filter(std::move(filter)) {}
+
+		Iterator begin() const;
+		Iterator end() const;
+
+	private:
+		const RouteAddressCache & cache;
+		RouteAddress filter;
+	};
+
+	/// Get iterable object listing addresses matching given filter
+	Filtered filter(RouteAddress && filter) const;
+};
+
 /// Cache containing information about available links (interfaces)
 /**
  * The object can be iterated to get individual links.
@@ -192,7 +254,7 @@ public:
 		Cache(cache) {}
 
 	/// Lookup link in cache by link name
-	RouteLink getByName(const string & name);
+	RouteLink getByName(const string & name) const;
 
 	class Iterator : public Cache::Iterator
 	{
@@ -230,6 +292,9 @@ class RouteCacheManager : public CacheManager
 public:
 	RouteCacheManager();
 	~RouteCacheManager();
+
+	/// Get cache for address objects
+	RouteAddressCache addressCache();
 
 	/// Get cache for link objects
 	RouteLinkCache linkCache();

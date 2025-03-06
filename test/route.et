@@ -7,3 +7,20 @@ test LinkList:
         /link-list-item [0-9]+ lo/
         /link-list-item [0-9]+ ${p.node.ifname}/
         /link-list-done/
+
+test AddressList:
+    spawn as p
+
+    send "address-list dev ${p.node.ifname} family inet" to p
+    expect from p:
+        /address-list-item ${p.node.ip}\/24/
+    local:
+        expect /address-list-(.*)/ from p capture done
+        guard (done == "done")
+
+    send "address-list dev ${p.node.ifname} family inet6" to p
+    expect from p:
+        /address-list-item fe80:.*/
+    local:
+        expect /address-list-(.*)/ from p capture done
+        guard (done == "done")

@@ -15,6 +15,13 @@ RouteAddress::RouteAddress():
 		throw std::runtime_error("Failed to allocate route netlink address");
 }
 
+RouteAddress::RouteAddress(rtnl_addr * addr_):
+	addr { addr_ }
+{
+	if (addr)
+		nl_object_get(reinterpret_cast<nl_object *>(addr));
+}
+
 RouteAddress::RouteAddress(RouteAddress && other)
 {
 	addr = other.addr;
@@ -322,6 +329,14 @@ RouteCacheManager::RouteCacheManager():
 
 RouteCacheManager::~RouteCacheManager() = default;
 
+RouteAddressCache RouteCacheManager::addressCache()
+{
+	nl_cache * cache;
+	int err = nl_cache_mngr_add(mngr, "route/addr", nullptr, nullptr, &cache);
+	Exception::throwCode("nl_cache_mngr_add failed", err);
+	return RouteAddressCache(cache);
+}
+
 RouteLinkCache RouteCacheManager::linkCache()
 {
 	nl_cache * cache;
@@ -330,7 +345,90 @@ RouteLinkCache RouteCacheManager::linkCache()
 	return RouteLinkCache(cache);
 }
 
-RouteLink RouteLinkCache::getByName(const string & name)
+RouteAddressCache::Iterator::Iterator(nl_object * obj_):
+	obj(reinterpret_cast<rtnl_addr *>(obj_))
+{}
+
+RouteAddressCache::Iterator::Iterator(nl_object * obj_, nl_object * filter_):
+	obj(reinterpret_cast<rtnl_addr *>(obj_)),
+	filter(reinterpret_cast<rtnl_addr *>(filter_))
+{
+	if (not nl_object_match_filter(obj_, filter_))
+		++(*this);
+}
+
+RouteAddressCache::Iterator::reference RouteAddressCache::Iterator::operator*() const
+{
+	return obj;
+}
+
+RouteAddressCache::Iterator::pointer RouteAddressCache::Iterator::operator->() const
+{
+	return &obj;
+}
+
+bool RouteAddressCache::Iterator::operator==(const Iterator & other) const
+{
+	return obj.get() == other.obj.get();
+}
+
+bool RouteAddressCache::Iterator::operator!=(const Iterator & other) const
+{
+	return obj.get() != other.obj.get();
+}
+
+RouteAddressCache::Iterator & RouteAddressCache::Iterator::operator++()
+{
+	nl_object * next = reinterpret_cast<nl_object *>(obj.get());
+	nl_object * raw_filter = reinterpret_cast<nl_object *>(filter.get());
+	do {
+		next = nl_cache_get_next(next);
+	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
+	obj = RouteAddress(reinterpret_cast<rtnl_addr *>(next));
+	return *this;
+}
+
+RouteAddressCache::Iterator RouteAddressCache::Iterator::operator++(int)
+{
+	nl_object * next = reinterpret_cast<nl_object *>(obj.get());
+	nl_object * raw_filter = reinterpret_cast<nl_object *>(filter.get());
+	do {
+		next = nl_cache_get_next(next);
+	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
+
+	Iterator tmp = move(*this);
+	obj = RouteAddress(reinterpret_cast<rtnl_addr *>(next));
+	filter = RouteAddress(reinterpret_cast<rtnl_addr *>(raw_filter));
+	return tmp;
+}
+
+RouteAddressCache::Iterator RouteAddressCache::begin() const
+{
+	return Iterator(nl_cache_get_first(cache));
+}
+
+RouteAddressCache::Iterator RouteAddressCache::end() const
+{
+	return Iterator(nullptr);
+}
+
+RouteAddressCache::Filtered RouteAddressCache::filter(RouteAddress && filter) const
+{
+	return Filtered(*this, move(filter));
+}
+
+RouteAddressCache::Iterator RouteAddressCache::Filtered::begin() const
+{
+	return Iterator(nl_cache_get_first(const_cast<nl_cache *>(cache.get())),
+			const_cast<nl_object *>(reinterpret_cast<const nl_object *>(filter.get())));
+}
+
+RouteAddressCache::Iterator RouteAddressCache::Filtered::end() const
+{
+	return Iterator(nullptr);
+}
+
+RouteLink RouteLinkCache::getByName(const string & name) const
 {
 	RouteLink link { rtnl_link_get_by_name(cache, name.c_str()) };
 	if (link)

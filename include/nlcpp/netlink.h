@@ -48,6 +48,9 @@ public:
 	Address & operator=(Address &&);
 	~Address();
 
+	/// Get string representation of the address
+	operator string() const;
+
 	/// Get binary representation of the address
 	std::ranges::subrange<const uint8_t *> binary() const;
 
@@ -75,6 +78,10 @@ public:
 	Cache(Cache &&);
 	Cache & operator=(Cache &&);
 	~Cache();
+
+	/// Get the raw libnl nl_cache pointer
+	const nl_cache * get() const { return cache; }
+	nl_cache * get() { return cache; }
 
 	class Iterator
 	{

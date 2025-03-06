@@ -1,5 +1,7 @@
 #include <nlcpp.h>
 
+#include <sys/socket.h>
+
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -11,6 +13,7 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::function;
+using std::move;
 using std::mutex;
 using std::ostringstream;
 using std::scoped_lock;
@@ -49,8 +52,45 @@ void linkList(const vector<string> &)
 	printLine("link-list-done");
 }
 
+void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, const vector<string> & args)
+{
+	for (size_t i = 0; i < args.size(); i++) {
+		if (args[i] == "family" && i + 1 < args.size()) {
+			const auto & family = args[i + 1];
+			if (family == "inet")
+				addr.family(AF_INET);
+			else if (family == "inet6")
+				addr.family(AF_INET6);
+			i++;
+		}
+
+		else if (args[i] == "dev" && i + 1 < args.size()) {
+			const auto & dev = args[i + 1];
+			addr.ifindex(linkCache.getByName(dev).ifindex());
+			i++;
+		}
+	}
+}
+
+void addressList(const vector<string> & args)
+{
+	RouteCacheManager mngr;
+	auto rcache = mngr.addressCache();
+
+	RouteAddress filter;
+	parseAddressArgs(mngr.linkCache(), filter, args);
+
+	for (const auto & addr : rcache.filter(move(filter))) {
+		ostringstream ss;
+		ss << "address-list-item " << string(addr.local());
+		printLine(ss.str());
+	}
+	printLine("address-list-done");
+}
+
 vector<Command> commands = {
 	{ "link-list", linkList },
+	{ "address-list", addressList },
 };
 
 }
