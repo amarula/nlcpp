@@ -69,6 +69,10 @@ void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, con
 			addr.ifindex(linkCache.getByName(dev).ifindex());
 			i++;
 		}
+
+		else {
+			addr.local(Address(args[i]));
+		}
 	}
 }
 
@@ -88,9 +92,39 @@ void addressList(const vector<string> & args)
 	printLine("address-list-done");
 }
 
+void addressAdd(const vector<string> & args)
+{
+	RouteCacheManager mngr;
+	auto rcache = mngr.addressCache();
+
+	RouteAddress addr;
+	parseAddressArgs(mngr.linkCache(), addr, args);
+
+	nl::RouteSocket rsocket;
+	rsocket.add(addr);
+
+	printLine("address-add-done");
+}
+
+void addressDel(const vector<string> & args)
+{
+	RouteCacheManager mngr;
+	auto rcache = mngr.addressCache();
+
+	RouteAddress addr;
+	parseAddressArgs(mngr.linkCache(), addr, args);
+
+	nl::RouteSocket rsocket;
+	rsocket.del(addr);
+
+	printLine("address-del-done");
+}
+
 vector<Command> commands = {
 	{ "link-list", linkList },
 	{ "address-list", addressList },
+	{ "address-add", addressAdd },
+	{ "address-del", addressDel },
 };
 
 }

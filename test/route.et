@@ -24,3 +24,29 @@ test AddressList:
     local:
         expect /address-list-(.*)/ from p capture done
         guard (done == "done")
+
+test AddressChange:
+    spawn as p
+    with p:
+        # Remove IPv4 addresses
+        send "address-del dev ${p.node.ifname} family inet"
+        expect /address-del-done/
+
+        send "address-list dev ${p.node.ifname}"
+        expect /address-list-item fe80:.*/
+        local:
+            expect /address-list-(.*)/ capture done
+            guard (done == "done")
+
+        # Add and check new ones
+        let addrs = [ "9.8.7.6/24", "9.8.7.5", "fd80:1234::3/64", "fd80:1235::4/48", "fd80:1234::5" ]
+        for addr in addrs:
+            send "address-add dev ${p.node.ifname} $addr"
+            expect /address-add-done/
+        send "address-list dev ${p.node.ifname}"
+        for addr in addrs:
+            expect /address-list-item $addr/
+        expect /address-list-item fe80:.*/
+        local:
+            expect /address-list-(.*)/ capture done
+            guard (done == "done")
