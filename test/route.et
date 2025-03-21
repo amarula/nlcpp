@@ -50,3 +50,17 @@ test AddressChange:
         local:
             expect /address-list-(.*)/ capture done
             guard (done == "done")
+
+test AddressWatch:
+    spawn as p
+    with p:
+        send "address-watch"
+        expect /address-watch-done/
+
+        let addrs = [ "9.8.7.6", "fd80:1234::3/64" ]
+        for addr in addrs:
+            send "address-add dev ${p.node.ifname} $addr"
+            expect /address-add-done/
+
+        for addr in addrs:
+            expect /address-watch-event new $addr/

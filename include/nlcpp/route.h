@@ -6,6 +6,10 @@
 
 #include <nlcpp/netlink.h>
 
+#include <functional>
+#include <memory>
+#include <vector>
+
 struct rtnl_addr;
 struct rtnl_link;
 struct rtnl_nexthop;
@@ -13,7 +17,10 @@ struct rtnl_route;
 
 namespace nl {
 
+using std::function;
 using std::optional;
+using std::unique_ptr;
+using std::vector;
 
 /// Address object used in the routing netlink protocol
 /**
@@ -190,10 +197,15 @@ public:
  */
 class RouteAddressCache : public Cache
 {
-public:
-	explicit RouteAddressCache(nl_cache * cache):
-		Cache(cache) {}
+	explicit RouteAddressCache(nl_cache * cache_,
+			unique_ptr<vector<function<void(const RouteAddress &, Action)>>> && cbs):
+		Cache(cache_),
+		callbacks(move(cbs))
+	{}
 
+	friend class RouteCacheManager;
+
+public:
 	class Iterator : public Cache::Iterator
 	{
 	public:
@@ -241,6 +253,11 @@ public:
 
 	/// Get iterable object listing addresses matching given filter
 	Filtered filter(RouteAddress && filter) const;
+
+	void watch(function<void(const RouteAddress &, Action)> callback);
+
+protected:
+	unique_ptr<vector<function<void(const RouteAddress &, Action)>>> callbacks;
 };
 
 /// Cache containing information about available links (interfaces)
@@ -249,10 +266,11 @@ public:
  */
 class RouteLinkCache : public Cache
 {
-public:
-	explicit RouteLinkCache(nl_cache * cache):
-		Cache(cache) {}
+	explicit RouteLinkCache(nl_cache * cache_):
+		Cache(cache_) {}
 
+	friend class RouteCacheManager;
+public:
 	/// Lookup link in cache by link name
 	RouteLink getByName(const string & name) const;
 

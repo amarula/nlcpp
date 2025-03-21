@@ -148,4 +148,25 @@ CacheManager::~CacheManager()
 	nl_cache_mngr_free(mngr);
 }
 
+int CacheManager::getFd() const
+{
+	return nl_cache_mngr_get_fd(mngr);
+}
+
+int CacheManager::poll(int timeout)
+{
+	int ret = nl_cache_mngr_poll(mngr, timeout);
+	if (ret < 0)
+		Exception::throwCode("nl_cache_mngr_poll failed", ret);
+	return ret;
+}
+
+int CacheManager::dataReady()
+{
+	int ret = nl_cache_mngr_data_ready(mngr);
+	if (ret < 0)
+		Exception::throwCode("nl_cache_mngr_data_ready failed", ret);
+	return ret;
+}
+
 }

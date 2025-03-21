@@ -3,6 +3,7 @@
 #include <netlink/route/addr.h>
 #include <netlink/route/route.h>
 
+using std::make_unique;
 using std::move;
 using std::nullopt;
 
@@ -332,9 +333,18 @@ RouteCacheManager::~RouteCacheManager() = default;
 RouteAddressCache RouteCacheManager::addressCache()
 {
 	nl_cache * cache;
-	int err = nl_cache_mngr_add(mngr, "route/addr", nullptr, nullptr, &cache);
+	auto callbacks = make_unique<vector<function<void(const RouteAddress &, Action)>>>();
+	auto cb = [](nl_cache *, nl_object * obj, int action, void * vcallbacks) {
+		auto * callbacks =
+			static_cast<vector<function<void(const RouteAddress &, Action)>> *>(vcallbacks);
+		RouteAddress addr(reinterpret_cast<rtnl_addr *>(obj));
+
+		for (const auto & cb : *callbacks)
+			cb(addr, Action(action));
+	};
+	int err = nl_cache_mngr_add(mngr, "route/addr", cb, callbacks.get(), &cache);
 	Exception::throwCode("nl_cache_mngr_add failed", err);
-	return RouteAddressCache(cache);
+	return RouteAddressCache(cache, move(callbacks));
 }
 
 RouteLinkCache RouteCacheManager::linkCache()
@@ -415,6 +425,11 @@ RouteAddressCache::Iterator RouteAddressCache::end() const
 RouteAddressCache::Filtered RouteAddressCache::filter(RouteAddress && filter) const
 {
 	return Filtered(*this, move(filter));
+}
+
+void RouteAddressCache::watch(function<void(const RouteAddress &, Action)> callback)
+{
+	callbacks->push_back(callback);
 }
 
 RouteAddressCache::Iterator RouteAddressCache::Filtered::begin() const

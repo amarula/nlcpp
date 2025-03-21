@@ -68,6 +68,17 @@ private:
 };
 
 
+/// Action types used in watch callbacks
+enum class Action : int
+{
+	Unspecified,
+	New,
+	Delete,
+	Get,
+	Set,
+	Change,
+};
+
 /// Base class for libnl caches
 class Cache
 {
@@ -97,6 +108,10 @@ class CacheManager
 public:
 	explicit CacheManager(int protocol);
 	~CacheManager();
+
+	int getFd() const;
+	int poll(int timeout);
+	int dataReady();
 
 protected:
 	nl_cache_mngr * mngr;

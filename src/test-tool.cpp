@@ -1,9 +1,12 @@
 #include <nlcpp.h>
 
+#include <poll.h>
+#include <string.h>
 #include <sys/socket.h>
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -18,9 +21,17 @@ using std::mutex;
 using std::ostringstream;
 using std::scoped_lock;
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 using namespace nl;
+
+vector<pollfd> pollFds {
+	{ 0, POLLIN, 0 },
+};
+
+vector<unique_ptr<CacheManager>> managers {};
+vector<unique_ptr<Cache>> caches {};
 
 namespace {
 
@@ -120,11 +131,38 @@ void addressDel(const vector<string> & args)
 	printLine("address-del-done");
 }
 
+void addressWatch(const vector<string> & args)
+{
+	auto mngr = std::make_unique<RouteCacheManager>();
+	auto cache = std::make_unique<RouteAddressCache>(mngr->addressCache());
+
+	cache->watch([](const RouteAddress & addr, Action action) {
+		ostringstream ss;
+		ss << "address-watch-event ";
+
+		switch (action)
+		{
+		case Action::New: ss << "new"; break;
+		case Action::Delete: ss << "del"; break;
+		default: ss << "unknown"; break;
+		}
+
+		ss << " " << string(addr.local());
+		printLine(ss.str());
+	});
+
+	pollFds.emplace_back(mngr->getFd(), POLLIN, 0);
+	managers.emplace_back(move(mngr));
+	caches.emplace_back(move(cache));
+	printLine("address-watch-done");
+}
+
 vector<Command> commands = {
 	{ "link-list", linkList },
 	{ "address-list", addressList },
 	{ "address-add", addressAdd },
 	{ "address-del", addressDel },
+	{ "address-watch", addressWatch },
 };
 
 }
@@ -150,40 +188,56 @@ int main(int argc, char * argv[])
 		return 1;
 	}
 
-	while (getline(&line, &size, stdin) > 0) {
-		optional<string> command;
-		vector<string> args;
-
-		const char * last = line;
-		for (const char * cur = line;; cur++) {
-			if (isspace(*cur) || *cur == '\0') {
-				if (last < cur) {
-					if (!command)
-						command.emplace(last, cur);
-					else
-						args.emplace_back(last, cur);
-				}
-				last = cur + 1;
-
-				if (*cur == '\0')
-					break;
-			}
+	while (true) {
+		int ready = poll(pollFds.data(), pollFds.size(), -1);
+		if (ready < 0) {
+			fprintf(stderr, "poll failed: %s", strerror(errno));
+			return 1;
 		}
 
-		if (!command)
-			continue;
+		for (size_t i = 1; i < pollFds.size(); i++) {
+			if (pollFds[i].revents)
+				managers[i - 1]->dataReady();
+		}
 
-		bool found = false;
-		for (const auto & cmd : commands) {
-			if (cmd.name == *command) {
-				found = true;
-				cmd.action(args);
+		if (pollFds[0].revents) {
+			if (getline(&line, &size, stdin) <= 0)
 				break;
-			}
-		}
 
-		if (!found)
-			cerr << "Unknown command: '" << *command << "'" << endl;
+			optional<string> command;
+			vector<string> args;
+
+			const char * last = line;
+			for (const char * cur = line;; cur++) {
+				if (isspace(*cur) || *cur == '\0') {
+					if (last < cur) {
+						if (!command)
+							command.emplace(last, cur);
+						else
+							args.emplace_back(last, cur);
+					}
+					last = cur + 1;
+
+					if (*cur == '\0')
+						break;
+				}
+			}
+
+			if (!command)
+				continue;
+
+			bool found = false;
+			for (const auto & cmd : commands) {
+				if (cmd.name == *command) {
+					found = true;
+					cmd.action(args);
+					break;
+				}
+			}
+
+			if (!found)
+				cerr << "Unknown command: '" << *command << "'" << endl;
+		}
 	}
 
 	free(line);
