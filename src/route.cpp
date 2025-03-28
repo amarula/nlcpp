@@ -3,6 +3,8 @@
 #include <netlink/route/addr.h>
 #include <netlink/route/route.h>
 
+#include <stdexcept>
+
 using std::make_unique;
 using std::move;
 using std::nullopt;
