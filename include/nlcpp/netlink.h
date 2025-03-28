@@ -55,9 +55,9 @@ public:
 	std::ranges::subrange<const uint8_t *> binary() const;
 
 	/// Get prefix length
-	int prefixlen() const;
+	unsigned int prefixlen() const;
 	/// Set prefix length
-	Address & prefixlen(int);
+	Address & prefixlen(unsigned int);
 
 	/// Get the raw libnl nl_addr pointer
 	const nl_addr * get() const { return addr; }

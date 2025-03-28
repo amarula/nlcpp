@@ -87,14 +87,14 @@ std::ranges::subrange<const uint8_t *> Address::binary() const
 	return std::ranges::subrange(ptr, ptr + nl_addr_get_len(addr));
 }
 
-int Address::prefixlen() const
+unsigned int Address::prefixlen() const
 {
 	return nl_addr_get_prefixlen(addr);
 }
 
-Address & Address::prefixlen(int prefixlen)
+Address & Address::prefixlen(unsigned int prefixlen)
 {
-	nl_addr_set_prefixlen(addr, prefixlen);
+	nl_addr_set_prefixlen(addr, static_cast<int>(prefixlen));
 	return *this;
 }
 
