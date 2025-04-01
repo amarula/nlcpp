@@ -79,18 +79,29 @@ public:
 
 	/// Get name of the link object, or nullopt if not specified
 	optional<string> name() const;
+	/// Set name of the link object
+	RouteLink & name(const string &);
+
+	/// Get flags of the link object
+	unsigned int getFlags() const;
+	/// Set flags of the link object
+	RouteLink & setFlags(unsigned int);
+	/// Unset flags of the link object
+	RouteLink & unsetFlags(unsigned int);
 
 	/// Get interface index of the link object, or 0 if not set
 	int ifindex() const;
+	/// Set interface index
+	RouteLink & ifindex(int index);
 
 	/// Get operational status
 	uint8_t operstate() const;
 	/// Set operational status
 	RouteLink & operstate(uint8_t);
 
-	/// Get the raw libnll rtnl_link pointer
+	/// Get the raw libnl rtnl_link pointer
 	rtnl_link * get() { return link; }
-	/// Get the raw libnll rtnl_link pointer
+	/// Get the raw libnl rtnl_link pointer
 	const rtnl_link * get() const { return link; }
 
 private:
@@ -183,6 +194,17 @@ public:
 	 * Deletes all addresses matched by given RouteAddress object.
 	 */
 	RouteSocket & del(const RouteAddress &);
+
+
+	/// Add new link (interface)
+	RouteSocket & add(const RouteLink &);
+
+	/// Delete existing link (interface)
+	RouteSocket & del(const RouteLink &);
+
+	/// Change existing link (interface)
+	RouteSocket & change(const RouteLink & orig, const RouteLink & changes);
+
 
 	/// Add new route
 	RouteSocket & add(const Route &);

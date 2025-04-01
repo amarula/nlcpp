@@ -117,9 +117,38 @@ optional<string> RouteLink::name() const
 	return nullopt;
 }
 
+RouteLink & RouteLink::name(const string & value)
+{
+	rtnl_link_set_name(link, value.c_str());
+	return *this;
+}
+
+unsigned int RouteLink::getFlags() const
+{
+	return rtnl_link_get_flags(link);
+}
+
+RouteLink & RouteLink::setFlags(unsigned int value)
+{
+	rtnl_link_set_flags(link, value);
+	return *this;
+}
+
+RouteLink & RouteLink::unsetFlags(unsigned int value)
+{
+	rtnl_link_unset_flags(link, value);
+	return *this;
+}
+
 int RouteLink::ifindex() const
 {
 	return rtnl_link_get_ifindex(link);
+}
+
+RouteLink & RouteLink::ifindex(int value)
+{
+	rtnl_link_set_ifindex(link, value);
+	return *this;
 }
 
 uint8_t RouteLink::operstate() const
@@ -309,6 +338,28 @@ RouteSocket & RouteSocket::del(const RouteAddress & addr)
 {
 	int err = rtnl_addr_delete(sock, const_cast<rtnl_addr *>(addr.get()), 0);
 	Exception::throwCode("rtnl_addr_delete failed", err);
+	return *this;
+}
+
+RouteSocket & RouteSocket::add(const RouteLink & link)
+{
+	int err = rtnl_link_add(sock, const_cast<rtnl_link *>(link.get()), 0);
+	Exception::throwCode("rtnl_link_add failed", err);
+	return *this;
+}
+
+RouteSocket & RouteSocket::del(const RouteLink & link)
+{
+	int err = rtnl_link_delete(sock, link.get());
+	Exception::throwCode("rtnl_link_delete failed", err);
+	return *this;
+}
+
+RouteSocket & RouteSocket::change(const RouteLink & orig, const RouteLink & changes)
+{
+	int err = rtnl_link_change(sock, const_cast<rtnl_link *>(orig.get()),
+			const_cast<rtnl_link *>(changes.get()), 0);
+	Exception::throwCode("rtnl_link_change failed", err);
 	return *this;
 }
 
