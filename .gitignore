@@ -2,4 +2,5 @@ doc/
 build*/
 .cache/
 .test/
+.minici/
 compile_commands.json
