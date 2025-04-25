@@ -180,7 +180,6 @@ class RouteSocket : public Socket
 {
 public:
 	RouteSocket();
-	~RouteSocket();
 
 	/// Add new protocol address
 	/**
@@ -331,7 +330,6 @@ class RouteCacheManager : public CacheManager
 {
 public:
 	RouteCacheManager();
-	~RouteCacheManager();
 
 	/// Get cache for address objects
 	RouteAddressCache addressCache();

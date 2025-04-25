@@ -8,8 +8,6 @@ Exception::Exception(const string & prefix, int code):
 	msg { prefix + ": " + nl_geterror(code) }
 {}
 
-Exception::~Exception() = default;
-
 const char * Exception::what() const noexcept
 {
 	return msg.c_str();
@@ -70,12 +68,9 @@ void Exception::throwCode(const string & prefix, int code)
 }
 
 AttributeNotAvailable::AttributeNotAvailable(const string & prefix): Exception(prefix, NLE_NOATTR) {}
-AttributeNotAvailable::~AttributeNotAvailable() = default;
 
 MissingAttribute::MissingAttribute(const string & prefix): Exception(prefix, NLE_MISSING_ATTR) {}
-MissingAttribute::~MissingAttribute() = default;
 
 NoAddress::NoAddress(const string & prefix): Exception(prefix, NLE_NOADDR) {}
-NoAddress::~NoAddress() = default;
 
 }

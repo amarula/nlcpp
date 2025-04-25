@@ -325,8 +325,6 @@ RouteSocket::RouteSocket():
 	Socket(NETLINK_ROUTE)
 {}
 
-RouteSocket::~RouteSocket() = default;
-
 RouteSocket & RouteSocket::add(const RouteAddress & addr)
 {
 	int err = rtnl_addr_add(sock, const_cast<rtnl_addr *>(addr.get()), 0);
@@ -380,8 +378,6 @@ RouteSocket & RouteSocket::del(const Route & route)
 RouteCacheManager::RouteCacheManager():
 	CacheManager(NETLINK_ROUTE)
 {}
-
-RouteCacheManager::~RouteCacheManager() = default;
 
 RouteAddressCache RouteCacheManager::addressCache()
 {
