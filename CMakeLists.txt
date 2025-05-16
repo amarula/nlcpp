@@ -11,6 +11,7 @@ endif()
 
 add_library(nlcpp
 	src/exception.cpp
+	src/generic.cpp
 	src/netlink.cpp
 	src/route.cpp
 )
@@ -18,9 +19,11 @@ add_library(nlcpp
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(NL libnl-3.0)
 pkg_check_modules(NL_ROUTE libnl-route-3.0)
+pkg_check_modules(NL_GENL libnl-genl-3.0)
 
 target_include_directories(nlcpp PUBLIC
 	${NL_INCLUDE_DIRS}
+	${NL_GENL_INCLUDE_DIRS}
 	${NL_ROUTE_INCLUDE_DIRS}
 )
 
@@ -30,6 +33,7 @@ target_include_directories(nlcpp PUBLIC
 
 target_link_libraries(nlcpp PUBLIC
 	${NL_LIBRARIES}
+	${NL_GENL_LIBRARIES}
 	${NL_ROUTE_LIBRARIES}
 )
 
