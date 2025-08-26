@@ -8,4 +8,5 @@
 
 #include <nlcpp/generic.h>
 #include <nlcpp/netlink.h>
+#include <nlcpp/nl80211.h>
 #include <nlcpp/route.h>

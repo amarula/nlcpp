@@ -13,6 +13,7 @@ add_library(nlcpp
 	src/exception.cpp
 	src/generic.cpp
 	src/netlink.cpp
+	src/nl80211.cpp
 	src/route.cpp
 )
 
