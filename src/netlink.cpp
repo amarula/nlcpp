@@ -1,7 +1,9 @@
 #include <nlcpp/netlink.h>
 
-#include <netlink/netlink.h>
 #include <netlink/cache.h>
+#include <netlink/netlink.h>
+
+#include <nlcpp/message.h>
 
 #if __cplusplus >= 202002L
 #include <ranges>
@@ -23,11 +25,71 @@ Socket::Socket(int protocol)
 		nl_socket_free(sock);
 		throw std::runtime_error("Failed to connect netlink socket");
 	}
+
+	callbacks = nl_cb_alloc(NL_CB_DEFAULT);
+	if (! callbacks) {
+		nl_socket_free(sock);
+		throw std::runtime_error("Failed to allocate callback set");
+	}
+
+	nl_cb_err(callbacks, NL_CB_CUSTOM, &Socket::errorCallbackWrapper, this);
+	nl_cb_set(callbacks, NL_CB_FINISH, NL_CB_CUSTOM, &Socket::finishCallbackWrapper, this);
+	nl_cb_set(callbacks, NL_CB_ACK, NL_CB_CUSTOM, &Socket::ackCallbackWrapper, this);
+	nl_cb_set(callbacks, NL_CB_VALID, NL_CB_CUSTOM, &Socket::validCallbackWrapper, this);
 }
 
 Socket::~Socket()
 {
+	nl_cb_put(callbacks);
 	nl_socket_free(sock);
+}
+
+void Socket::sendMessageSync(const Message & message)
+{
+	nl_send_auto(sock, const_cast<nl_msg *>(message.get()));
+	callStatus = 1; // set to 0 when finished or negative error code
+	while (callStatus > 0)
+		nl_recvmsgs(sock, callbacks);
+}
+
+void Socket::sendMessageSync(const Message & message, function<void(Message)> callback)
+{
+	std::swap(validCallback, callback);
+	sendMessageSync(message);
+	std::swap(validCallback, callback);
+}
+
+int Socket::finishCallbackWrapper(nl_msg * /*msg*/, void * arg)
+{
+	auto * socket = static_cast<Socket *>(arg);
+	socket->callStatus = 0;
+	return NL_SKIP;
+}
+
+int Socket::ackCallbackWrapper(nl_msg * /*msg*/, void * arg)
+{
+	auto * socket = static_cast<Socket *>(arg);
+	socket->callStatus = 0;
+	return NL_STOP;
+}
+
+int Socket::validCallbackWrapper(nl_msg * msg, void * arg)
+{
+	auto * socket = static_cast<Socket *>(arg);
+	if (socket->validCallback)
+		socket->validCallback(Message(msg));
+	return NL_SKIP;
+}
+
+int Socket::errorCallbackWrapper(sockaddr_nl * /*saddr*/, nlmsgerr * err, void * arg)
+{
+	auto * socket = static_cast<Socket *>(arg);
+	if (err->error > 0)
+		socket->callStatus = -EPROTO;
+	else
+		socket->callStatus = err->error;
+
+	return NL_STOP;
 }
 
 Address::Address(nl_addr * addr_):

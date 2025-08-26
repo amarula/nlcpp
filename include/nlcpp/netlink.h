@@ -7,6 +7,7 @@
 #include <nlcpp/exception.h>
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #if __cplusplus >= 202002L
 #include <ranges>
@@ -16,13 +17,20 @@
 struct nl_addr;
 struct nl_cache;
 struct nl_cache_mngr;
+struct nl_cb;
+struct nl_msg;
 struct nl_object;
 struct nl_sock;
+struct nlmsgerr;
+struct sockaddr_nl;
 
 namespace nl {
 
+using std::function;
 using std::optional;
 using std::string;
+
+class Message;
 
 /// Base class for netlink sockets
 class Socket
@@ -31,11 +39,28 @@ public:
 	explicit Socket(int family);
 	~Socket();
 
+	/// Send given message and wait for ACK or FINISH.
+	void sendMessageSync(const Message & message);
+
+	/// Send given message and wait for ACK or FINISH, calling given
+	/// callback for all valid replies.
+	void sendMessageSync(const Message & message, function<void(Message)> callback);
+
 	/// Get the raw libnl nl_sock pointer
 	const nl_sock * get() const { return sock; }
+	nl_sock * get() { return sock; }
 
 protected:
+	static int finishCallbackWrapper(nl_msg * msg, void * arg);
+	static int ackCallbackWrapper(nl_msg * msg, void * arg);
+	static int validCallbackWrapper(nl_msg * msg, void * arg);
+	static int errorCallbackWrapper(sockaddr_nl * saddr, nlmsgerr * err, void * arg);
+
 	nl_sock * sock;
+	nl_cb * callbacks;
+
+	int32_t callStatus;
+	function<void(Message)> validCallback;
 };
 
 /// Netlink address – represents network address along with its prefix length
