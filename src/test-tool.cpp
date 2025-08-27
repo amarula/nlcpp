@@ -112,9 +112,11 @@ void addressAdd(const vector<string> & args)
 	parseAddressArgs(mngr.linkCache(), addr, args);
 
 	nl::RouteSocket rsocket;
-	rsocket.add(addr);
+	auto res = rsocket.add(addr);
 
-	printLine("address-add-done");
+	ostringstream ss;
+	ss << "address-add-done " << (res ? "true" : "false");
+	printLine(ss.str());
 }
 
 void addressDel(const vector<string> & args)
@@ -126,9 +128,11 @@ void addressDel(const vector<string> & args)
 	parseAddressArgs(mngr.linkCache(), addr, args);
 
 	nl::RouteSocket rsocket;
-	rsocket.del(addr);
+	auto res = rsocket.del(addr);
 
-	printLine("address-del-done");
+	ostringstream ss;
+	ss << "address-del-done " << (res ? "true" : "false");
+	printLine(ss.str());
 }
 
 void addressWatch(const vector<string> & args)

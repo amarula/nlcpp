@@ -30,7 +30,9 @@ test AddressChange:
     with p:
         # Remove IPv4 addresses
         send "address-del dev ${p.node.ifname} family inet"
-        expect /address-del-done/
+        expect /address-del-done true/
+        send "address-del dev ${p.node.ifname} family inet"
+        expect /address-del-done false/
 
         send "address-list dev ${p.node.ifname}"
         expect /address-list-item fe80:.*/
@@ -42,7 +44,15 @@ test AddressChange:
         let addrs = [ "9.8.7.6/24", "9.8.7.5", "fd80:1234::3/64", "fd80:1235::4/48", "fd80:1234::5" ]
         for addr in addrs:
             send "address-add dev ${p.node.ifname} $addr"
-            expect /address-add-done/
+            expect /address-add-done true/
+            send "address-del dev ${p.node.ifname} $addr"
+            expect /address-del-done true/
+            send "address-del dev ${p.node.ifname} $addr"
+            expect /address-del-done false/
+            send "address-add dev ${p.node.ifname} $addr"
+            expect /address-add-done true/
+            send "address-add dev ${p.node.ifname} $addr"
+            expect /address-add-done false/
         send "address-list dev ${p.node.ifname}"
         for addr in addrs:
             expect /address-list-item $addr/
@@ -60,7 +70,7 @@ test AddressWatch:
         let addrs = [ "9.8.7.6", "fd80:1234::3/64" ]
         for addr in addrs:
             send "address-add dev ${p.node.ifname} $addr"
-            expect /address-add-done/
+            expect /address-add-done true/
 
         for addr in addrs:
             expect /address-watch-event new $addr/

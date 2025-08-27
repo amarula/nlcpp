@@ -325,54 +325,60 @@ RouteSocket::RouteSocket():
 	Socket(NETLINK_ROUTE)
 {}
 
-RouteSocket & RouteSocket::add(const RouteAddress & addr)
+bool RouteSocket::add(const RouteAddress & addr)
 {
 	int err = rtnl_addr_add(sock, const_cast<rtnl_addr *>(addr.get()), 0);
+	if (err == -NLE_EXIST)
+		return false;
 	Exception::throwCode("rtnl_addr_add failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::del(const RouteAddress & addr)
+bool RouteSocket::del(const RouteAddress & addr)
 {
 	int err = rtnl_addr_delete(sock, const_cast<rtnl_addr *>(addr.get()), 0);
+	if (err == -NLE_NOADDR)
+		return false;
 	Exception::throwCode("rtnl_addr_delete failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::add(const RouteLink & link)
+bool RouteSocket::add(const RouteLink & link)
 {
 	int err = rtnl_link_add(sock, const_cast<rtnl_link *>(link.get()), 0);
 	Exception::throwCode("rtnl_link_add failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::del(const RouteLink & link)
+bool RouteSocket::del(const RouteLink & link)
 {
 	int err = rtnl_link_delete(sock, link.get());
+	if (err == -NLE_NODEV)
+		return false;
 	Exception::throwCode("rtnl_link_delete failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::change(const RouteLink & orig, const RouteLink & changes)
+bool RouteSocket::change(const RouteLink & orig, const RouteLink & changes)
 {
 	int err = rtnl_link_change(sock, const_cast<rtnl_link *>(orig.get()),
 			const_cast<rtnl_link *>(changes.get()), 0);
 	Exception::throwCode("rtnl_link_change failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::add(const Route & route)
+bool RouteSocket::add(const Route & route)
 {
 	int err = rtnl_route_add(sock, const_cast<rtnl_route *>(route.get()), NLM_F_EXCL);
 	Exception::throwCode("rtnl_route_add failed", err);
-	return *this;
+	return true;
 }
 
-RouteSocket & RouteSocket::del(const Route & route)
+bool RouteSocket::del(const Route & route)
 {
 	int err = rtnl_route_delete(sock, const_cast<rtnl_route *>(route.get()), 0);
 	Exception::throwCode("rtnl_route_delete failed", err);
-	return *this;
+	return true;
 }
 
 RouteCacheManager::RouteCacheManager():

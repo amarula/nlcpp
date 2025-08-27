@@ -186,30 +186,30 @@ public:
 	 * All the necessary information like address, prefix length or
 	 * interface must be configured on the passed RouteAddress object.
 	 */
-	RouteSocket & add(const RouteAddress &);
+	bool add(const RouteAddress &);
 
 	/// Delete matched protocol address(es)
 	/**
 	 * Deletes all addresses matched by given RouteAddress object.
 	 */
-	RouteSocket & del(const RouteAddress &);
+	bool del(const RouteAddress &);
 
 
 	/// Add new link (interface)
-	RouteSocket & add(const RouteLink &);
+	bool add(const RouteLink &);
 
 	/// Delete existing link (interface)
-	RouteSocket & del(const RouteLink &);
+	bool del(const RouteLink &);
 
 	/// Change existing link (interface)
-	RouteSocket & change(const RouteLink & orig, const RouteLink & changes);
+	bool change(const RouteLink & orig, const RouteLink & changes);
 
 
 	/// Add new route
-	RouteSocket & add(const Route &);
+	bool add(const Route &);
 
 	/// Delete route
-	RouteSocket & del(const Route &);
+	bool del(const Route &);
 };
 
 /// Cache containing information about network addresses
