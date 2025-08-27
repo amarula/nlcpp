@@ -8,7 +8,9 @@
 
 #include <cstdint>
 #include <optional>
+#if __cplusplus >= 202002L
 #include <ranges>
+#endif
 #include <string>
 
 struct nl_addr;
@@ -51,8 +53,10 @@ public:
 	/// Get string representation of the address
 	operator string() const;
 
+#if __cplusplus >= 202002L
 	/// Get binary representation of the address
 	std::ranges::subrange<const uint8_t *> binary() const;
+#endif
 
 	/// Get prefix length
 	unsigned int prefixlen() const;

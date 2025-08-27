@@ -3,7 +3,9 @@
 #include <netlink/netlink.h>
 #include <netlink/cache.h>
 
+#if __cplusplus >= 202002L
 #include <ranges>
+#endif
 #include <stdexcept>
 
 using std::move;
@@ -81,11 +83,13 @@ Address::operator string() const
 	return string(buf);
 }
 
+#if __cplusplus >= 202002L
 std::ranges::subrange<const uint8_t *> Address::binary() const
 {
 	auto * ptr = static_cast<const uint8_t *>(nl_addr_get_binary_addr(addr));
 	return std::ranges::subrange(ptr, ptr + nl_addr_get_len(addr));
 }
+#endif
 
 unsigned int Address::prefixlen() const
 {
