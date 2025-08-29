@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(nlcpp)
+project(nlcpp VERSION 0.1.0)
 
 include(GNUInstallDirs)
 
@@ -17,6 +17,11 @@ add_library(nlcpp
 	src/netlink.cpp
 	src/nl80211.cpp
 	src/route.cpp
+)
+
+set_target_properties(nlcpp PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
 find_package(PkgConfig REQUIRED)
