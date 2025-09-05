@@ -44,6 +44,19 @@ RouteAddress::~RouteAddress()
 	rtnl_addr_put(addr);
 }
 
+optional<string> RouteAddress::label() const
+{
+	if (const char * str = rtnl_addr_get_label(addr))
+		return string(str);
+	return std::nullopt;
+}
+
+RouteAddress & RouteAddress::label(const string & value)
+{
+	rtnl_addr_set_label(addr, value.c_str());
+	return *this;
+}
+
 int RouteAddress::ifindex() const
 {
 	return rtnl_addr_get_ifindex(addr);
@@ -63,6 +76,17 @@ int RouteAddress::family() const
 RouteAddress & RouteAddress::family(int family)
 {
 	rtnl_addr_set_family(addr, family);
+	return *this;
+}
+
+RouteScope RouteAddress::scope() const
+{
+	return static_cast<RouteScope>(rtnl_addr_get_scope(addr));
+}
+
+RouteAddress & RouteAddress::scope(RouteScope value)
+{
+	rtnl_addr_set_scope(addr, static_cast<int>(value));
 	return *this;
 }
 
@@ -286,14 +310,14 @@ Route::~Route()
 	rtnl_route_put(route);
 }
 
-uint8_t Route::scope() const
+RouteScope Route::scope() const
 {
-	return rtnl_route_get_scope(route);
+	return static_cast<RouteScope>(rtnl_route_get_scope(route));
 }
 
-Route & Route::scope(uint8_t scope)
+Route & Route::scope(RouteScope scope)
 {
-	rtnl_route_set_scope(route, scope);
+	rtnl_route_set_scope(route, static_cast<uint8_t>(scope));
 	return *this;
 }
 

@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 struct rtnl_addr;
@@ -19,8 +20,18 @@ namespace nl {
 
 using std::function;
 using std::optional;
+using std::string;
 using std::unique_ptr;
 using std::vector;
+
+enum class RouteScope
+{
+	UNIVERSE=0,
+	SITE=200,
+	LINK=253,
+	HOST=254,
+	NOWHERE=255
+};
 
 /// Address object used in the routing netlink protocol
 /**
@@ -39,6 +50,11 @@ public:
 	RouteAddress & operator=(RouteAddress &&);
 	~RouteAddress();
 
+	/// Get label
+	optional<string> label() const;
+	/// Set label
+	RouteAddress & label(const string & value);
+
 	/// Get interface index
 	int ifindex() const;
 	/// Set interface index
@@ -48,6 +64,11 @@ public:
 	int family() const;
 	/// Set address family
 	RouteAddress & family(int family);
+
+	/// Get scope
+	RouteScope scope() const;
+	/// Set scope
+	RouteAddress & scope(RouteScope value);
 
 	/// Get local address
 	Address local() const;
@@ -155,9 +176,9 @@ public:
 	~Route();
 
 	/// Get scope
-	uint8_t scope() const;
+	RouteScope scope() const;
 	/// Set scope
-	Route & scope(uint8_t);
+	Route & scope(RouteScope);
 
 	/// Get destination address
 	Address dst() const;
