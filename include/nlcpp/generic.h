@@ -31,6 +31,9 @@ public:
 	/// events from multicast groups.
 	void onValidMessage(function<void(GenericNetlinkMessage)>);
 
+	class Ctrl;
+	Ctrl ctrl();
+
 	class Nl80211;
 	/// Interface for nl80211 netlink family. Returned object can be used
 	/// only as long as this GenericSocket object exists.

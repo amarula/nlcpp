@@ -14,6 +14,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 add_library(nlcpp
+	src/ctrl.cpp
 	src/exception.cpp
 	src/generic.cpp
 	src/message.cpp

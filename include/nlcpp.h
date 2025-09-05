@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <nlcpp/ctrl.h>
 #include <nlcpp/generic.h>
 #include <nlcpp/message.h>
 #include <nlcpp/netlink.h>
