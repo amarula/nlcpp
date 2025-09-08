@@ -17,11 +17,15 @@ class Exception : public std::exception
 protected:
 	Exception(const string & prefix, int code);
 public:
-	const char * what() const noexcept;
+	const char * what() const noexcept override;
+
+	/// Get netlink error code
+	int code() const noexcept;
 
 	static void throwCode(const string & prefix, int code);
 
 private:
+	int error;
 	string msg;
 };
 

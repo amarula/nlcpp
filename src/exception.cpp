@@ -5,12 +5,18 @@
 namespace nl {
 
 Exception::Exception(const string & prefix, int code):
+	error { code },
 	msg { prefix + ": " + nl_geterror(code) }
 {}
 
 const char * Exception::what() const noexcept
 {
 	return msg.c_str();
+}
+
+int Exception::code() const noexcept
+{
+	return error;
 }
 
 void Exception::throwCode(const string & prefix, int code)
