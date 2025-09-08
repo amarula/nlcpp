@@ -59,6 +59,18 @@ void Socket::sendMessageSync(const Message & message, function<void(Message)> ca
 	std::swap(validCallback, callback);
 }
 
+void Socket::addMembership(int group)
+{
+	int err = nl_socket_add_membership(sock, group);
+	Exception::throwCode("failed to add membership", err);
+}
+
+void Socket::dropMembership(int group)
+{
+	int err = nl_socket_drop_membership(sock, group);
+	Exception::throwCode("failed to add membership", err);
+}
+
 int Socket::finishCallbackWrapper(nl_msg * /*msg*/, void * arg)
 {
 	auto * socket = static_cast<Socket *>(arg);

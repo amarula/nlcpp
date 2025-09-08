@@ -34,6 +34,13 @@ void GenericSocket::sendMessageSync(const GenericNetlinkMessage & message, funct
 	});
 }
 
+void GenericSocket::onValidMessage(function<void(GenericNetlinkMessage)> callback)
+{
+	validCallback = [callback = move(callback)](Message msg) {
+		callback(GenericNetlinkMessage(msg.get()));
+	};
+}
+
 
 GenericNetlinkMessage::GenericNetlinkMessage(uint32_t port, uint32_t seq, int family,
 		int hdrlen, int flags, uint8_t cmd, uint8_t version)

@@ -46,6 +46,12 @@ public:
 	/// callback for all valid replies.
 	void sendMessageSync(const Message & message, function<void(Message)> callback);
 
+	/// Join the specified multicast group
+	void addMembership(int group);
+
+	/// Leave the specified multicast group
+	void dropMembership(int group);
+
 	/// Get the raw libnl nl_sock pointer
 	const nl_sock * get() const { return sock; }
 	nl_sock * get() { return sock; }

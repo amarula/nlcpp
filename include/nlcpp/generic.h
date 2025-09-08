@@ -15,7 +15,7 @@ namespace nl {
 class GenericNetlinkMessage;
 
 /// Socket opened for the generic netlink protocol
-class GenericSocket : protected Socket
+class GenericSocket : public Socket
 {
 public:
 	GenericSocket();
@@ -26,6 +26,10 @@ public:
 	/// Send given message and wait for ACK or FINISH, calling given
 	/// callback for all valid replies.
 	void sendMessageSync(const GenericNetlinkMessage & message, function<void(GenericNetlinkMessage)> callback);
+
+	/// Set callback to be called for each valid message; for example
+	/// events from multicast groups.
+	void onValidMessage(function<void(GenericNetlinkMessage)>);
 
 	class Nl80211;
 	/// Interface for nl80211 netlink family. Returned object can be used
