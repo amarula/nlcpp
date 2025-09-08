@@ -4,6 +4,10 @@ job build:
     - cmake --build build
   artifact test-tool:
     path: build/nlcpp-test-tool
+  artifact library-soname:
+    path: build/libnlcpp.so.<0->.<0->
+  artifact library-full:
+    path: build/libnlcpp.so.<0->.<0->.*
 
 job clang:
   shell:
@@ -13,5 +17,7 @@ job clang:
 job test:
   uses:
     - build.test-tool
+    - build.library-soname
+    - build.library-full
   shell:
-    - erebos-tester --verbose
+    - LD_LIBRARY_PATH="$(realpath build)" erebos-tester --verbose
