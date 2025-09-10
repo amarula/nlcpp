@@ -75,6 +75,19 @@ void Socket::dropMembership(int group)
 	Exception::throwCode("failed to add membership", err);
 }
 
+unsigned int Socket::receiveMessages()
+{
+	int res = nl_recvmsgs(sock, callbacks);
+	if (res < 0)
+		Exception::throwCode("failed to receive message", res);
+	return res;
+}
+
+int Socket::getFileDescriptor()
+{
+	return nl_socket_get_fd(sock);
+}
+
 int Socket::finishCallbackWrapper(nl_msg * /*msg*/, void * arg)
 {
 	auto * socket = static_cast<Socket *>(arg);

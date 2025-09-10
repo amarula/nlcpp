@@ -52,6 +52,14 @@ public:
 	/// Leave the specified multicast group
 	void dropMembership(int group);
 
+	/// Receive messages from netlink socket, calling configured callback
+	/** @return Number of received messages
+	 */
+	unsigned int receiveMessages();
+
+	/// Get the underlying file descriptor of the socket, which can be used for polling
+	int getFileDescriptor();
+
 	/// Get the raw libnl nl_sock pointer
 	const nl_sock * get() const { return sock; }
 	nl_sock * get() { return sock; }
