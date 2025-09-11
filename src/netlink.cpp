@@ -61,6 +61,10 @@ void Socket::sendMessageSync(const Message & message, function<void(Message)> ca
 
 void Socket::addMembership(int group)
 {
+	// Disable sequence checking to receive multicast messages
+	nl_cb_set(callbacks, NL_CB_SEQ_CHECK, NL_CB_CUSTOM,
+			[](nl_msg *, void *) -> int { return NL_OK; }, nullptr);
+
 	int err = nl_socket_add_membership(sock, group);
 	Exception::throwCode("failed to add membership", err);
 }
