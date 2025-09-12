@@ -174,6 +174,17 @@ Address::operator string() const
 	return string(buf);
 }
 
+int Address::family() const
+{
+	return nl_addr_get_family(addr);
+}
+
+Address & Address::family(int family)
+{
+	nl_addr_set_family(addr, family);
+	return *this;
+}
+
 #if __cplusplus >= 202002L
 std::ranges::subrange<const uint8_t *> Address::binary() const
 {

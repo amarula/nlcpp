@@ -92,6 +92,11 @@ public:
 	/// Get string representation of the address
 	operator string() const;
 
+	/// Get address family
+	int family() const;
+	/// Set address family
+	Address & family(int family);
+
 #if __cplusplus >= 202002L
 	/// Get binary representation of the address
 	std::ranges::subrange<const uint8_t *> binary() const;
