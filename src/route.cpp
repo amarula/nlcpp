@@ -394,6 +394,8 @@ bool RouteSocket::change(const RouteLink & orig, const RouteLink & changes)
 bool RouteSocket::add(const Route & route)
 {
 	int err = rtnl_route_add(sock, const_cast<rtnl_route *>(route.get()), NLM_F_EXCL);
+	if (err == -NLE_EXIST)
+		return false;
 	Exception::throwCode("rtnl_route_add failed", err);
 	return true;
 }
@@ -401,6 +403,8 @@ bool RouteSocket::add(const Route & route)
 bool RouteSocket::del(const Route & route)
 {
 	int err = rtnl_route_delete(sock, const_cast<rtnl_route *>(route.get()), 0);
+	if (err == -NLE_OBJ_NOTFOUND)
+		return false;
 	Exception::throwCode("rtnl_route_delete failed", err);
 	return true;
 }
