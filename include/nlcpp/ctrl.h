@@ -30,6 +30,11 @@ class GenericSocket::Ctrl
 public:
 	explicit Ctrl(GenericSocket & genl);
 
+	/// Get generic netlink family name
+	const string & familyName() const;
+	/// Get generic netlink family id
+	int familyId() const;
+
 	optional<GenericFamily> getFamily(const string & name);
 	vector<GenericFamily> getFamilies();
 
@@ -37,7 +42,6 @@ private:
 	static void parseGenericFamily(GenericFamily &, const GenericNetlinkMessage &);
 
 	GenericSocket & genl;
-	const int family;
 };
 
 }

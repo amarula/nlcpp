@@ -10,6 +10,8 @@ namespace nl {
 using std::array;
 using std::nullopt;
 
+static const string ctrlFamilyName { "nlctrl" };
+
 GenericSocket::Ctrl GenericSocket::ctrl()
 {
 	return Ctrl(*this);
@@ -17,13 +19,23 @@ GenericSocket::Ctrl GenericSocket::ctrl()
 
 GenericSocket::Ctrl::Ctrl(GenericSocket & genl_)
 	: genl(genl_)
-	, family(genl_.resolve("nlctrl"))
 {
 }
 
+const string & GenericSocket::Ctrl::familyName() const
+{
+	return ctrlFamilyName;
+}
+
+int GenericSocket::Ctrl::familyId() const
+{
+	return GENL_ID_CTRL;
+}
+
+
 optional<GenericFamily> GenericSocket::Ctrl::getFamily(const string & name)
 {
-	GenericNetlinkMessage msg(0, 0, family, 0, 0, CTRL_CMD_GETFAMILY, 0);
+	GenericNetlinkMessage msg(0, 0, familyId(), 0, 0, CTRL_CMD_GETFAMILY, 0);
 	msg.put(CTRL_ATTR_FAMILY_NAME, name);
 
 	optional<GenericFamily> result;
@@ -38,7 +50,7 @@ optional<GenericFamily> GenericSocket::Ctrl::getFamily(const string & name)
 
 vector<GenericFamily> GenericSocket::Ctrl::getFamilies()
 {
-	GenericNetlinkMessage msg(0, 0, family, 0, NLM_F_DUMP, CTRL_CMD_GETFAMILY, 0);
+	GenericNetlinkMessage msg(0, 0, familyId(), 0, NLM_F_DUMP, CTRL_CMD_GETFAMILY, 0);
 
 	vector<GenericFamily> result;
 

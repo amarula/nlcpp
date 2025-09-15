@@ -53,6 +53,11 @@ class GenericSocket::Nl80211
 public:
 	explicit Nl80211(GenericSocket & genl);
 
+	/// Get generic netlink family name
+	const string & familyName() const;
+	/// Get generic netlink family id
+	int familyId() const;
+
 	optional<nl80211::InterfaceConfiguration> getInterface(uint32_t ifindex);
 	vector<nl80211::InterfaceConfiguration> getInterfaces();
 

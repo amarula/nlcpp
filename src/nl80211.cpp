@@ -13,6 +13,8 @@ using namespace nl80211;
 
 using std::array;
 
+static const string nl80211FamilyName { NL80211_GENL_NAME };
+
 GenericSocket::Nl80211 GenericSocket::nl80211()
 {
 	return Nl80211(*this);
@@ -20,9 +22,20 @@ GenericSocket::Nl80211 GenericSocket::nl80211()
 
 GenericSocket::Nl80211::Nl80211(GenericSocket & genl_)
 	: genl(genl_)
-	, family(genl_.resolve(NL80211_GENL_NAME))
+	, family(genl_.resolve(nl80211FamilyName))
 {
 }
+
+const string & GenericSocket::Nl80211::familyName() const
+{
+	return nl80211FamilyName;
+}
+
+int GenericSocket::Nl80211::familyId() const
+{
+	return family;
+}
+
 
 optional<InterfaceConfiguration> GenericSocket::Nl80211::getInterface(uint32_t ifindex)
 {
