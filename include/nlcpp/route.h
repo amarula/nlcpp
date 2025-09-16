@@ -50,6 +50,8 @@ public:
 	RouteAddress & operator=(RouteAddress &&);
 	~RouteAddress();
 
+	using RawType = rtnl_addr;
+
 	/// Get label
 	optional<string> label() const;
 	/// Set label
@@ -95,6 +97,8 @@ public:
 	RouteLink(RouteLink &&);
 	RouteLink & operator=(RouteLink &&);
 	~RouteLink();
+
+	using RawType = rtnl_link;
 
 	explicit operator bool() const { return bool(link); }
 
@@ -233,26 +237,17 @@ public:
 	bool del(const Route &);
 };
 
-/// Cache containing information about network addresses
-/**
- * The object can be iterated to get individual addresses.
- */
-class RouteAddressCache : public Cache
+template<class T>
+class TypedCache : public Cache
 {
-	explicit RouteAddressCache(nl_cache * cache_,
-			unique_ptr<vector<function<void(const RouteAddress &, Action)>>> && cbs):
-		Cache(cache_),
-		callbacks(move(cbs))
-	{}
-
-	friend class RouteCacheManager;
-
 public:
+	TypedCache(nl_cache * cache_): Cache(cache_) {}
+
 	class Iterator : public Cache::Iterator
 	{
 	public:
 		using iterator_category = std::forward_iterator_tag;
-		using value_type        = const RouteAddress;
+		using value_type        = const T;
 		using pointer           = value_type *;
 		using reference         = value_type &;
 
@@ -272,13 +267,31 @@ public:
 		Iterator operator++(int);
 
 	private:
-		RouteAddress obj;
-		RouteAddress filter;
+		T obj;
+		T filter;
 	};
 
 	Iterator begin() const;
 	Iterator end() const;
+};
 
+extern template class TypedCache<RouteAddress>;
+
+/// Cache containing information about network addresses
+/**
+ * The object can be iterated to get individual addresses.
+ */
+class RouteAddressCache : public TypedCache<RouteAddress>
+{
+	explicit RouteAddressCache(nl_cache * cache_,
+			unique_ptr<vector<function<void(const RouteAddress &, Action)>>> && cbs):
+		TypedCache(cache_),
+		callbacks(move(cbs))
+	{}
+
+	friend class RouteCacheManager;
+
+public:
 	class Filtered
 	{
 	public:
@@ -302,48 +315,21 @@ protected:
 	unique_ptr<vector<function<void(const RouteAddress &, Action)>>> callbacks;
 };
 
+extern template class TypedCache<RouteLink>;
+
 /// Cache containing information about available links (interfaces)
 /**
  * The object can be iterated to get individual links.
  */
-class RouteLinkCache : public Cache
+class RouteLinkCache : public TypedCache<RouteLink>
 {
 	explicit RouteLinkCache(nl_cache * cache_):
-		Cache(cache_) {}
+		TypedCache(cache_) {}
 
 	friend class RouteCacheManager;
 public:
 	/// Lookup link in cache by link name
 	RouteLink getByName(const string & name) const;
-
-	class Iterator : public Cache::Iterator
-	{
-	public:
-		using iterator_category = std::forward_iterator_tag;
-		using value_type        = const RouteLink;
-		using pointer           = value_type *;
-		using reference         = value_type &;
-
-		Iterator(nl_object *);
-		Iterator(Iterator &&) = default;
-		Iterator & operator=(Iterator &&) = default;
-		~Iterator() = default;
-
-		reference operator*() const;
-		pointer operator->() const;
-
-		bool operator==(const Iterator &) const;
-		bool operator!=(const Iterator &) const;
-
-		Iterator & operator++();
-		Iterator operator++(int);
-
-	private:
-		RouteLink obj;
-	};
-
-	Iterator begin() const;
-	Iterator end() const;
 };
 
 /// Cache manager for the routing netlink cache

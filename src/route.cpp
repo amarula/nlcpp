@@ -438,50 +438,58 @@ RouteLinkCache RouteCacheManager::linkCache()
 	return RouteLinkCache(cache);
 }
 
-RouteAddressCache::Iterator::Iterator(nl_object * obj_):
-	obj(reinterpret_cast<rtnl_addr *>(obj_))
+template<class T>
+TypedCache<T>::Iterator::Iterator(nl_object * obj_):
+	obj(reinterpret_cast<typename T::RawType *>(obj_))
 {}
 
-RouteAddressCache::Iterator::Iterator(nl_object * obj_, nl_object * filter_):
-	obj(reinterpret_cast<rtnl_addr *>(obj_)),
-	filter(reinterpret_cast<rtnl_addr *>(filter_))
+template<class T>
+TypedCache<T>::Iterator::Iterator(nl_object * obj_, nl_object * filter_):
+	obj(reinterpret_cast<typename T::RawType *>(obj_)),
+	filter(reinterpret_cast<typename T::RawType *>(filter_))
 {
 	if (not nl_object_match_filter(obj_, filter_))
 		++(*this);
 }
 
-RouteAddressCache::Iterator::reference RouteAddressCache::Iterator::operator*() const
+template<class T>
+typename TypedCache<T>::Iterator::reference TypedCache<T>::Iterator::operator*() const
 {
 	return obj;
 }
 
-RouteAddressCache::Iterator::pointer RouteAddressCache::Iterator::operator->() const
+template<class T>
+typename TypedCache<T>::Iterator::pointer TypedCache<T>::Iterator::operator->() const
 {
 	return &obj;
 }
 
-bool RouteAddressCache::Iterator::operator==(const Iterator & other) const
+template<class T>
+bool TypedCache<T>::Iterator::operator==(const Iterator & other) const
 {
 	return obj.get() == other.obj.get();
 }
 
-bool RouteAddressCache::Iterator::operator!=(const Iterator & other) const
+template<class T>
+bool TypedCache<T>::Iterator::operator!=(const Iterator & other) const
 {
 	return obj.get() != other.obj.get();
 }
 
-RouteAddressCache::Iterator & RouteAddressCache::Iterator::operator++()
+template<class T>
+typename TypedCache<T>::Iterator & TypedCache<T>::Iterator::operator++()
 {
 	nl_object * next = reinterpret_cast<nl_object *>(obj.get());
 	nl_object * raw_filter = reinterpret_cast<nl_object *>(filter.get());
 	do {
 		next = nl_cache_get_next(next);
 	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
-	obj = RouteAddress(reinterpret_cast<rtnl_addr *>(next));
+	obj = T(reinterpret_cast<typename T::RawType *>(next));
 	return *this;
 }
 
-RouteAddressCache::Iterator RouteAddressCache::Iterator::operator++(int)
+template<class T>
+typename TypedCache<T>::Iterator TypedCache<T>::Iterator::operator++(int)
 {
 	nl_object * next = reinterpret_cast<nl_object *>(obj.get());
 	nl_object * raw_filter = reinterpret_cast<nl_object *>(filter.get());
@@ -490,20 +498,25 @@ RouteAddressCache::Iterator RouteAddressCache::Iterator::operator++(int)
 	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
 
 	Iterator tmp = move(*this);
-	obj = RouteAddress(reinterpret_cast<rtnl_addr *>(next));
-	filter = RouteAddress(reinterpret_cast<rtnl_addr *>(raw_filter));
+	obj = T(reinterpret_cast<typename T::RawType *>(next));
+	filter = T(reinterpret_cast<typename T::RawType *>(raw_filter));
 	return tmp;
 }
 
-RouteAddressCache::Iterator RouteAddressCache::begin() const
+template<class T>
+typename TypedCache<T>::Iterator TypedCache<T>::begin() const
 {
 	return Iterator(nl_cache_get_first(cache));
 }
 
-RouteAddressCache::Iterator RouteAddressCache::end() const
+template<class T>
+typename TypedCache<T>::Iterator TypedCache<T>::end() const
 {
 	return Iterator(nullptr);
 }
+
+
+template class TypedCache<RouteAddress>;
 
 RouteAddressCache::Filtered RouteAddressCache::filter(RouteAddress && filter) const
 {
@@ -526,59 +539,15 @@ RouteAddressCache::Iterator RouteAddressCache::Filtered::end() const
 	return Iterator(nullptr);
 }
 
+
+template class TypedCache<RouteLink>;
+
 RouteLink RouteLinkCache::getByName(const string & name) const
 {
 	RouteLink link { rtnl_link_get_by_name(cache, name.c_str()) };
 	if (link)
 		rtnl_link_put(link.get()); // refcount incremented by rtnl_link_get_by_name
 	return link;
-}
-
-RouteLinkCache::Iterator::Iterator(nl_object * obj_):
-	obj(reinterpret_cast<rtnl_link *>(obj_))
-{}
-
-RouteLinkCache::Iterator::reference RouteLinkCache::Iterator::operator*() const
-{
-	return obj;
-}
-
-RouteLinkCache::Iterator::pointer RouteLinkCache::Iterator::operator->() const
-{
-	return &obj;
-}
-
-bool RouteLinkCache::Iterator::operator==(const Iterator & other) const
-{
-	return obj.get() == other.obj.get();
-}
-
-bool RouteLinkCache::Iterator::operator!=(const Iterator & other) const
-{
-	return obj.get() != other.obj.get();
-}
-
-RouteLinkCache::Iterator & RouteLinkCache::Iterator::operator++()
-{
-	obj = RouteLink(reinterpret_cast<rtnl_link *>(nl_cache_get_next(reinterpret_cast<nl_object *>(obj.get()))));
-	return *this;
-}
-
-RouteLinkCache::Iterator RouteLinkCache::Iterator::operator++(int)
-{
-	Iterator tmp = move(*this);
-	obj = RouteLink(reinterpret_cast<rtnl_link *>(nl_cache_get_next(reinterpret_cast<nl_object *>(tmp.obj.get()))));
-	return tmp;
-}
-
-RouteLinkCache::Iterator RouteLinkCache::begin() const
-{
-	return Iterator(nl_cache_get_first(cache));
-}
-
-RouteLinkCache::Iterator RouteLinkCache::end() const
-{
-	return Iterator(nullptr);
 }
 
 }
