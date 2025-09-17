@@ -194,6 +194,13 @@ NextHop::NextHop():
 		throw std::runtime_error("Failed to allocate route netlink nexthop");
 }
 
+NextHop::NextHop(rtnl_nexthop * nh):
+	nexthop { rtnl_route_nh_clone(nh) }
+{
+	if (!nexthop)
+		throw std::runtime_error("Failed to clone route netlink nexthop");
+}
+
 NextHop::NextHop(const NextHop & other):
 	nexthop { rtnl_route_nh_clone(other.nexthop) }
 {
@@ -364,6 +371,19 @@ Route & Route::add(NextHop && nexthop)
 {
 	rtnl_route_add_nexthop(route, nexthop.take());
 	return *this;
+}
+
+vector<NextHop> Route::nexthops() const
+{
+	vector<NextHop> result;
+	result.reserve(rtnl_route_get_nnexthops(route));
+
+	rtnl_route_foreach_nexthop(route, [](rtnl_nexthop * nh, void * arg) {
+		auto presult = static_cast<vector<NextHop> *>(arg);
+		presult->emplace_back(nh);
+	}, &result);
+
+	return result;
 }
 
 

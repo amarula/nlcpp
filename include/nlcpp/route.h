@@ -167,6 +167,7 @@ class NextHop
 {
 public:
 	NextHop();
+	NextHop(rtnl_nexthop *);
 	NextHop(const NextHop &);
 	NextHop & operator=(const NextHop &);
 	NextHop(NextHop &&);
@@ -234,6 +235,9 @@ public:
 	Route & add(const NextHop &);
 	/// Add next hop
 	Route & add(NextHop &&);
+
+	/// Get list of next hops
+	vector<NextHop> nexthops() const;
 
 	/// Get the raw libnl rtnl_route pointer
 	rtnl_route * get() { return route; }
