@@ -6,6 +6,8 @@
 
 #include <nlcpp/netlink.h>
 
+#include <linux/rtnetlink.h>
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -26,11 +28,38 @@ using std::vector;
 
 enum class RouteScope
 {
-	UNIVERSE=0,
-	SITE=200,
-	LINK=253,
-	HOST=254,
-	NOWHERE=255
+	UNIVERSE = RT_SCOPE_UNIVERSE,
+	SITE = RT_SCOPE_SITE,
+	LINK = RT_SCOPE_LINK,
+	HOST = RT_SCOPE_HOST,
+	NOWHERE = RT_SCOPE_NOWHERE
+};
+
+enum class RouteProtocol
+{
+	UNSPEC = RTPROT_UNSPEC,
+	REDIRECT = RTPROT_REDIRECT, /// Route installed by ICMP redirects; not used by current IPv4
+	KERNEL = RTPROT_KERNEL, /// Route installed by kernel
+	BOOT = RTPROT_BOOT, /// Route installed during boot
+	STATIC = RTPROT_STATIC, /// Route installed by administrator
+	GATED = RTPROT_GATED, /// Apparently, GateD
+	RA = RTPROT_RA, /// RDISC/ND router advertisements
+	MRT = RTPROT_MRT, /// Merit MRT
+	ZEBRA = RTPROT_ZEBRA, /// Zebra
+	BIRD = RTPROT_BIRD, /// BIRD
+	DNROUTED = RTPROT_DNROUTED, /// DECnet routing daemon
+	XORP = RTPROT_XORP, /// XORP
+	NTK = RTPROT_NTK, /// Netsukuku
+	DHCP = RTPROT_DHCP, /// DHCP client
+	MROUTED = RTPROT_MROUTED, /// Multicast daemon
+	KEEPALIVED = RTPROT_KEEPALIVED, /// Keepalived daemon
+	BABEL = RTPROT_BABEL, /// Babel daemon
+	OPENR = RTPROT_OPENR, /// Open Routing (Open/R) Routes
+	BGP = RTPROT_BGP, /// BGP Routes
+	ISIS = RTPROT_ISIS, /// ISIS Routes
+	OSPF = RTPROT_OSPF, /// OSPF Routes
+	RIP = RTPROT_RIP, /// RIP Routes
+	EIGRP = RTPROT_EIGRP, /// EIGRP Routes
 };
 
 /// Address object used in the routing netlink protocol
@@ -185,6 +214,16 @@ public:
 	RouteScope scope() const;
 	/// Set scope
 	Route & scope(RouteScope);
+
+	/// Get protocol
+	RouteProtocol protocol() const;
+	/// Set protocol
+	Route & protocol(RouteProtocol);
+
+	/// Get family
+	uint8_t family() const;
+	/// Set family
+	Route & family(uint8_t);
 
 	/// Get destination address
 	Address dst() const;

@@ -321,6 +321,28 @@ Route & Route::scope(RouteScope scope)
 	return *this;
 }
 
+RouteProtocol Route::protocol() const
+{
+	return static_cast<RouteProtocol>(rtnl_route_get_protocol(route));
+}
+
+Route & Route::protocol(RouteProtocol value)
+{
+	rtnl_route_set_protocol(route, static_cast<uint8_t>(value));
+	return *this;
+}
+
+uint8_t Route::family() const
+{
+	return rtnl_route_get_family(route);
+}
+
+Route & Route::family(uint8_t value)
+{
+	rtnl_route_set_family(route, value);
+	return *this;
+}
+
 Address Route::dst() const
 {
 	return Address(rtnl_route_get_dst(route));
