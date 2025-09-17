@@ -221,6 +221,11 @@ public:
 	/// Set protocol
 	Route & protocol(RouteProtocol);
 
+	/// Get priority
+	uint32_t priority() const;
+	/// Set priority
+	Route & priority(uint32_t);
+
 	/// Get family
 	uint8_t family() const;
 	/// Set family

@@ -339,6 +339,17 @@ Route & Route::protocol(RouteProtocol value)
 	return *this;
 }
 
+uint32_t Route::priority() const
+{
+	return rtnl_route_get_priority(route);
+}
+
+Route & Route::priority(uint32_t value)
+{
+	rtnl_route_set_priority(route, value);
+	return *this;
+}
+
 uint8_t Route::family() const
 {
 	return rtnl_route_get_family(route);
