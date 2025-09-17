@@ -45,9 +45,15 @@ target_link_libraries(nlcpp PRIVATE
 )
 
 install(TARGETS nlcpp
+	EXPORT ${PROJECT_NAME}Config
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 install(DIRECTORY include/nlcpp TYPE INCLUDE)
+
+install(EXPORT ${PROJECT_NAME}Config
+	NAMESPACE ${PROJECT_NAME}::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
 
 
 add_executable(nlcpp-test-tool
