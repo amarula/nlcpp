@@ -179,6 +179,8 @@ public:
 	Route & operator=(Route &&);
 	~Route();
 
+	using RawType = rtnl_route;
+
 	/// Get scope
 	RouteScope scope() const;
 	/// Set scope
@@ -194,6 +196,9 @@ public:
 	/// Add next hop
 	Route & add(NextHop &&);
 
+	/// Get the raw libnl rtnl_route pointer
+	rtnl_route * get() { return route; }
+	/// Get the raw libnl rtnl_route pointer
 	const rtnl_route * get() const { return route; }
 
 private:
@@ -332,6 +337,21 @@ public:
 	RouteLink getByName(const string & name) const;
 };
 
+extern template class TypedCache<Route>;
+
+/// Cache containing information about available routes
+/**
+ * The object can be iterated to get individual links.
+ */
+class RouteCache : public TypedCache<Route>
+{
+	explicit RouteCache(nl_cache * cache_):
+		TypedCache(cache_) {}
+
+	friend class RouteCacheManager;
+public:
+};
+
 /// Cache manager for the routing netlink cache
 class RouteCacheManager : public CacheManager
 {
@@ -343,6 +363,9 @@ public:
 
 	/// Get cache for link objects
 	RouteLinkCache linkCache();
+
+	/// Get cache for route objects
+	RouteCache routeCache();
 };
 
 }

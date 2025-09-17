@@ -438,6 +438,15 @@ RouteLinkCache RouteCacheManager::linkCache()
 	return RouteLinkCache(cache);
 }
 
+RouteCache RouteCacheManager::routeCache()
+{
+	nl_cache * cache;
+	int err = nl_cache_mngr_add(mngr, "route/route", nullptr, nullptr, &cache);
+	Exception::throwCode("nl_cache_mngr_add failed", err);
+	return RouteCache(cache);
+}
+
+
 template<class T>
 TypedCache<T>::Iterator::Iterator(nl_object * obj_):
 	obj(reinterpret_cast<typename T::RawType *>(obj_))
@@ -549,5 +558,8 @@ RouteLink RouteLinkCache::getByName(const string & name) const
 		rtnl_link_put(link.get()); // refcount incremented by rtnl_link_get_by_name
 	return link;
 }
+
+
+template class TypedCache<Route>;
 
 }
