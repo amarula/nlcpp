@@ -34,7 +34,8 @@ pkg_check_modules(NL_ROUTE IMPORTED_TARGET libnl-route-3.0)
 pkg_check_modules(NL_GENL IMPORTED_TARGET libnl-genl-3.0)
 
 target_include_directories(nlcpp PUBLIC
-	include
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_link_libraries(nlcpp PRIVATE
