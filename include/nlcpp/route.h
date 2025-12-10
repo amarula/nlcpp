@@ -81,6 +81,8 @@ public:
 
 	using RawType = rtnl_addr;
 
+	explicit operator bool() const { return bool(addr); }
+
 	/// Get label
 	optional<string> label() const;
 	/// Set label
@@ -210,6 +212,8 @@ public:
 	~Route();
 
 	using RawType = rtnl_route;
+
+	explicit operator bool() const { return bool(route); }
 
 	/// Get scope
 	RouteScope scope() const;
