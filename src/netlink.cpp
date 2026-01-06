@@ -122,10 +122,27 @@ int Socket::errorCallbackWrapper(sockaddr_nl * /*saddr*/, nlmsgerr * err, void *
 }
 
 Address::Address(nl_addr * addr_):
+	Address(addr_, create_copy_from_pointer)
+{
+}
+
+Address::Address(nl_addr * addr_, CreateCopyFromPointer):
 	addr { nl_addr_clone(addr_) }
 {
 	if (!addr)
 		throw std::runtime_error("Failed to copy address");
+}
+
+Address::Address(nl_addr * addr_, TakeOwnershipOfPointer):
+	addr { addr_ }
+{
+}
+
+Address::Address(nl_addr * addr_, ShareOwnershipOfPointer):
+	addr { addr_ }
+{
+	if (addr)
+		nl_addr_get(addr);
 }
 
 Address::Address(const string & str)
@@ -205,6 +222,23 @@ Address & Address::prefixlen(unsigned int prefixlen)
 }
 
 Cache::Cache(nl_cache * cache_):
+	Cache(cache_, share_ownership_of_pointer)
+{
+}
+
+Cache::Cache(nl_cache * cache_, CreateCopyFromPointer):
+	cache(nl_cache_clone(cache_))
+{
+	if (!cache)
+		throw std::runtime_error("Failed to copy cache");
+}
+
+Cache::Cache(nl_cache * cache_, TakeOwnershipOfPointer):
+	cache(cache_)
+{
+}
+
+Cache::Cache(nl_cache * cache_, ShareOwnershipOfPointer):
 	cache(cache_)
 {
 	nl_cache_get(cache);

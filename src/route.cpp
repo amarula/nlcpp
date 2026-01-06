@@ -19,6 +19,16 @@ RouteAddress::RouteAddress():
 }
 
 RouteAddress::RouteAddress(rtnl_addr * addr_):
+	RouteAddress(addr_, share_ownership_of_pointer)
+{
+}
+
+RouteAddress::RouteAddress(rtnl_addr * addr_, TakeOwnershipOfPointer):
+	addr { addr_ }
+{
+}
+
+RouteAddress::RouteAddress(rtnl_addr * addr_, ShareOwnershipOfPointer):
 	addr { addr_ }
 {
 	if (addr)
@@ -92,7 +102,7 @@ RouteAddress & RouteAddress::scope(RouteScope value)
 
 Address RouteAddress::local() const
 {
-	return Address(rtnl_addr_get_local(addr));
+	return Address(rtnl_addr_get_local(addr), create_copy_from_pointer);
 }
 
 RouteAddress & RouteAddress::local(const Address & laddr)
@@ -109,6 +119,16 @@ RouteLink::RouteLink():
 }
 
 RouteLink::RouteLink(rtnl_link * link_):
+	RouteLink(link_, share_ownership_of_pointer)
+{
+}
+
+RouteLink::RouteLink(rtnl_link * link_, TakeOwnershipOfPointer):
+	link { link_ }
+{
+}
+
+RouteLink::RouteLink(rtnl_link * link_, ShareOwnershipOfPointer):
 	link { link_ }
 {
 	if (link)
@@ -195,10 +215,20 @@ NextHop::NextHop():
 }
 
 NextHop::NextHop(rtnl_nexthop * nh):
+	NextHop(nh, create_copy_from_pointer)
+{
+}
+
+NextHop::NextHop(rtnl_nexthop * nh, CreateCopyFromPointer):
 	nexthop { rtnl_route_nh_clone(nh) }
 {
 	if (!nexthop)
 		throw std::runtime_error("Failed to clone route netlink nexthop");
+}
+
+NextHop::NextHop(rtnl_nexthop * nh, TakeOwnershipOfPointer):
+	nexthop { nh }
+{
 }
 
 NextHop::NextHop(const NextHop & other):
@@ -264,7 +294,7 @@ NextHop & NextHop::ifindex(int index)
 optional<Address> NextHop::gateway() const
 {
 	if (auto addr = rtnl_route_nh_get_gateway(nexthop))
-		return Address(addr);
+		return Address(addr, create_copy_from_pointer);
 	return nullopt;
 }
 
@@ -292,6 +322,16 @@ Route::Route():
 }
 
 Route::Route(rtnl_route * route_):
+	Route(route_, share_ownership_of_pointer)
+{
+}
+
+Route::Route(rtnl_route * route_, TakeOwnershipOfPointer):
+	route { route_ }
+{
+}
+
+Route::Route(rtnl_route * route_, ShareOwnershipOfPointer):
 	route { route_ }
 {
 	if (route)
@@ -363,7 +403,7 @@ Route & Route::family(uint8_t value)
 
 Address Route::dst() const
 {
-	return Address(rtnl_route_get_dst(route));
+	return Address(rtnl_route_get_dst(route), create_copy_from_pointer);
 }
 
 Route & Route::dst(Address && addr)
@@ -391,7 +431,7 @@ vector<NextHop> Route::nexthops() const
 
 	rtnl_route_foreach_nexthop(route, [](rtnl_nexthop * nh, void * arg) {
 		auto presult = static_cast<vector<NextHop> *>(arg);
-		presult->emplace_back(nh);
+		presult->emplace_back(nh, create_copy_from_pointer);
 	}, &result);
 
 	return result;
@@ -473,14 +513,14 @@ RouteAddressCache RouteCacheManager::addressCache()
 	auto cb = [](nl_cache *, nl_object * obj, int action, void * vcallbacks) {
 		auto * callbacks =
 			static_cast<vector<function<void(const RouteAddress &, Action)>> *>(vcallbacks);
-		RouteAddress addr(reinterpret_cast<rtnl_addr *>(obj));
+		RouteAddress addr(reinterpret_cast<rtnl_addr *>(obj), share_ownership_of_pointer);
 
 		for (const auto & cb : *callbacks)
 			cb(addr, Action(action));
 	};
 	int err = nl_cache_mngr_add(mngr, "route/addr", cb, callbacks.get(), &cache);
 	Exception::throwCode("nl_cache_mngr_add failed", err);
-	return RouteAddressCache(cache, move(callbacks));
+	return RouteAddressCache(cache, share_ownership_of_pointer, move(callbacks));
 }
 
 RouteLinkCache RouteCacheManager::linkCache()
@@ -488,7 +528,7 @@ RouteLinkCache RouteCacheManager::linkCache()
 	nl_cache * cache;
 	int err = nl_cache_mngr_add(mngr, "route/link", nullptr, nullptr, &cache);
 	Exception::throwCode("nl_cache_mngr_add failed", err);
-	return RouteLinkCache(cache);
+	return RouteLinkCache(cache, share_ownership_of_pointer);
 }
 
 RouteCache RouteCacheManager::routeCache()
@@ -496,19 +536,19 @@ RouteCache RouteCacheManager::routeCache()
 	nl_cache * cache;
 	int err = nl_cache_mngr_add(mngr, "route/route", nullptr, nullptr, &cache);
 	Exception::throwCode("nl_cache_mngr_add failed", err);
-	return RouteCache(cache);
+	return RouteCache(cache, share_ownership_of_pointer);
 }
 
 
 template<class T>
 TypedCache<T>::Iterator::Iterator(nl_object * obj_):
-	obj(reinterpret_cast<typename T::RawType *>(obj_))
+	obj(reinterpret_cast<typename T::RawType *>(obj_), share_ownership_of_pointer)
 {}
 
 template<class T>
 TypedCache<T>::Iterator::Iterator(nl_object * obj_, nl_object * filter_):
-	obj(reinterpret_cast<typename T::RawType *>(obj_)),
-	filter(reinterpret_cast<typename T::RawType *>(filter_))
+	obj(reinterpret_cast<typename T::RawType *>(obj_), share_ownership_of_pointer),
+	filter(reinterpret_cast<typename T::RawType *>(filter_), share_ownership_of_pointer)
 {
 	if (not nl_object_match_filter(obj_, filter_))
 		++(*this);
@@ -546,7 +586,7 @@ typename TypedCache<T>::Iterator & TypedCache<T>::Iterator::operator++()
 	do {
 		next = nl_cache_get_next(next);
 	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
-	obj = T(reinterpret_cast<typename T::RawType *>(next));
+	obj = T(reinterpret_cast<typename T::RawType *>(next), share_ownership_of_pointer);
 	return *this;
 }
 
@@ -560,8 +600,8 @@ typename TypedCache<T>::Iterator TypedCache<T>::Iterator::operator++(int)
 	} while (next && raw_filter && not nl_object_match_filter(next, raw_filter));
 
 	Iterator tmp = move(*this);
-	obj = T(reinterpret_cast<typename T::RawType *>(next));
-	filter = T(reinterpret_cast<typename T::RawType *>(raw_filter));
+	obj = T(reinterpret_cast<typename T::RawType *>(next), share_ownership_of_pointer);
+	filter = T(reinterpret_cast<typename T::RawType *>(raw_filter), share_ownership_of_pointer);
 	return tmp;
 }
 
@@ -606,10 +646,8 @@ template class TypedCache<RouteLink>;
 
 RouteLink RouteLinkCache::getByName(const string & name) const
 {
-	RouteLink link { rtnl_link_get_by_name(cache, name.c_str()) };
-	if (link)
-		rtnl_link_put(link.get()); // refcount incremented by rtnl_link_get_by_name
-	return link;
+	return RouteLink(rtnl_link_get_by_name(cache, name.c_str()),
+		take_ownership_of_pointer); // refcount incremented by rtnl_link_get_by_name
 }
 
 

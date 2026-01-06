@@ -30,6 +30,36 @@ using std::function;
 using std::optional;
 using std::string;
 
+/// Constructor tag for raw pointers: create a copy of the object referred to by the given pointer
+/**
+ * Can be passed using the provided `nl::create_copy_from_pointer` static object:
+ * ```
+ * nl::Address(ptr, nl::create_copy_from_pointer);
+ * ```
+ */
+struct CreateCopyFromPointer {};
+inline constexpr CreateCopyFromPointer create_copy_from_pointer;
+
+/// Constructor tag for raw pointers: store the given pointer and free the object or decrease its refcount in destructor
+/**
+ * Can be passed using the provided `nl::take_ownership_of_pointer` static object:
+ * ```
+ * nl::Address(ptr, nl::take_ownership_of_pointer);
+ * ```
+ */
+struct TakeOwnershipOfPointer {};
+inline constexpr TakeOwnershipOfPointer take_ownership_of_pointer;
+
+/// Constructor tag for raw pointers: store the given pointer and increase its refcount; then decrease it in the destructor
+/**
+ * Can be passed using the provided `nl::share_ownership_of_pointer` static object:
+ * ```
+ * nl::Address(ptr, nl::share_ownership_of_pointer);
+ * ```
+ */
+struct ShareOwnershipOfPointer {};
+inline constexpr ShareOwnershipOfPointer share_ownership_of_pointer;
+
 class Message;
 
 /// Base class for netlink sockets
@@ -81,7 +111,11 @@ protected:
 class Address
 {
 public:
-	Address(nl_addr * addr);
+	[[deprecated("Use Address(nl_addr *, CreateCopyFromPointer) instead")]]
+		Address(nl_addr * addr);
+	Address(nl_addr * addr, CreateCopyFromPointer);
+	Address(nl_addr * addr, TakeOwnershipOfPointer);
+	Address(nl_addr * addr, ShareOwnershipOfPointer);
 	explicit Address(const string & str);
 	Address(const Address &);
 	Address & operator=(const Address &);
@@ -131,7 +165,11 @@ enum class Action : int
 class Cache
 {
 public:
-	Cache(nl_cache * cache);
+	[[deprecated("Use Cache(nl_cache *, ShareOwnershipOfPointer) instead")]]
+		Cache(nl_cache * cache);
+	Cache(nl_cache * addr, CreateCopyFromPointer);
+	Cache(nl_cache * addr, TakeOwnershipOfPointer);
+	Cache(nl_cache * addr, ShareOwnershipOfPointer);
 	Cache(const Cache &);
 	Cache & operator=(const Cache &);
 	Cache(Cache &&);

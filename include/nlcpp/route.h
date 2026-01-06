@@ -72,7 +72,10 @@ class RouteAddress
 {
 public:
 	RouteAddress();
-	RouteAddress(rtnl_addr *);
+	[[deprecated("Use RouteAddress(rtnl_addr *, ShareOwnershipOfPointer) instead")]]
+		RouteAddress(rtnl_addr *);
+	RouteAddress(rtnl_addr *, TakeOwnershipOfPointer);
+	RouteAddress(rtnl_addr *, ShareOwnershipOfPointer);
 	RouteAddress(const RouteAddress &) = delete;
 	RouteAddress & operator=(const RouteAddress &) = delete;
 	RouteAddress(RouteAddress &&);
@@ -122,7 +125,10 @@ class RouteLink
 {
 public:
 	RouteLink();
-	RouteLink(rtnl_link *);
+	[[deprecated("Use RouteLink(rtnl_link *, ShareOwnershipOfPointer) instead")]]
+		RouteLink(rtnl_link *);
+	RouteLink(rtnl_link *, TakeOwnershipOfPointer);
+	RouteLink(rtnl_link *, ShareOwnershipOfPointer);
 	RouteLink(const RouteLink &) = delete;
 	RouteLink & operator=(const RouteLink &) = delete;
 	RouteLink(RouteLink &&);
@@ -169,7 +175,10 @@ class NextHop
 {
 public:
 	NextHop();
-	NextHop(rtnl_nexthop *);
+	[[deprecated("Use NextHop(rtnl_nexthop *, CreateCopyFromPointer) instead")]]
+		NextHop(rtnl_nexthop *);
+	NextHop(rtnl_nexthop *, CreateCopyFromPointer);
+	NextHop(rtnl_nexthop *, TakeOwnershipOfPointer);
 	NextHop(const NextHop &);
 	NextHop & operator=(const NextHop &);
 	NextHop(NextHop &&);
@@ -204,7 +213,10 @@ class Route
 {
 public:
 	Route();
-	Route(rtnl_route *);
+	[[deprecated("Use Route(rtnl_route *, ShareOwnershipOfPointer) instead")]]
+		Route(rtnl_route *);
+	Route(rtnl_route *, TakeOwnershipOfPointer);
+	Route(rtnl_route *, ShareOwnershipOfPointer);
 	Route(const Route &) = delete;
 	Route & operator=(const Route &) = delete;
 	Route(Route &&);
@@ -297,9 +309,10 @@ public:
 template<class T>
 class TypedCache : public Cache
 {
-public:
-	TypedCache(nl_cache * cache_): Cache(cache_) {}
+protected:
+	TypedCache(nl_cache * cache_, ShareOwnershipOfPointer tag): Cache(cache_, tag) {}
 
+public:
 	class Iterator : public Cache::Iterator
 	{
 	public:
@@ -340,9 +353,9 @@ extern template class TypedCache<RouteAddress>;
  */
 class RouteAddressCache : public TypedCache<RouteAddress>
 {
-	explicit RouteAddressCache(nl_cache * cache_,
+	explicit RouteAddressCache(nl_cache * cache_, ShareOwnershipOfPointer tag,
 			unique_ptr<vector<function<void(const RouteAddress &, Action)>>> && cbs):
-		TypedCache(cache_),
+		TypedCache(cache_, tag),
 		callbacks(move(cbs))
 	{}
 
@@ -380,8 +393,8 @@ extern template class TypedCache<RouteLink>;
  */
 class RouteLinkCache : public TypedCache<RouteLink>
 {
-	explicit RouteLinkCache(nl_cache * cache_):
-		TypedCache(cache_) {}
+	explicit RouteLinkCache(nl_cache * cache_, ShareOwnershipOfPointer tag):
+		TypedCache(cache_, tag) {}
 
 	friend class RouteCacheManager;
 public:
@@ -397,8 +410,8 @@ extern template class TypedCache<Route>;
  */
 class RouteCache : public TypedCache<Route>
 {
-	explicit RouteCache(nl_cache * cache_):
-		TypedCache(cache_) {}
+	explicit RouteCache(nl_cache * cache_, ShareOwnershipOfPointer tag):
+		TypedCache(cache_, tag) {}
 
 	friend class RouteCacheManager;
 public:
