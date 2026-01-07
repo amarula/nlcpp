@@ -117,6 +117,7 @@ public:
 	Address(nl_addr * addr, TakeOwnershipOfPointer);
 	Address(nl_addr * addr, ShareOwnershipOfPointer);
 	explicit Address(const string & str);
+	Address(const string & str, int family);
 	Address(const Address &);
 	Address & operator=(const Address &);
 	Address(Address &&);

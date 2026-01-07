@@ -145,9 +145,13 @@ Address::Address(nl_addr * addr_, ShareOwnershipOfPointer):
 		nl_addr_get(addr);
 }
 
-Address::Address(const string & str)
+Address::Address(const string & str):
+	Address(str, AF_UNSPEC)
+{}
+
+Address::Address(const string & str, int family)
 {
-	int err = nl_addr_parse(str.c_str(), AF_UNSPEC, &addr);
+	int err = nl_addr_parse(str.c_str(), family, &addr);
 	Exception::throwCode("Failed to parse address \"" + str + "\": ", err);
 }
 
