@@ -206,6 +206,19 @@ RouteLink & RouteLink::operstate(uint8_t value)
 	return *this;
 }
 
+optional<string> RouteLink::type() const
+{
+	if (const char * str = rtnl_link_get_type(link))
+		return str;
+	return nullopt;
+}
+
+RouteLink & RouteLink::type(const string & value)
+{
+	rtnl_link_set_type(link, value.c_str());
+	return *this;
+}
+
 
 NextHop::NextHop():
 	nexthop { rtnl_route_nh_alloc() }
@@ -462,7 +475,10 @@ bool RouteSocket::del(const RouteAddress & addr)
 
 bool RouteSocket::add(const RouteLink & link)
 {
-	int err = rtnl_link_add(sock, const_cast<rtnl_link *>(link.get()), 0);
+	int err = rtnl_link_add(sock, const_cast<rtnl_link *>(link.get()),
+			NLM_F_CREATE | NLM_F_EXCL);
+	if (err == -NLE_EXIST)
+		return false;
 	Exception::throwCode("rtnl_link_add failed", err);
 	return true;
 }

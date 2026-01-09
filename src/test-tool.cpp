@@ -48,6 +48,25 @@ struct Command
 	function<void(const vector<string> &)> action;
 };
 
+void parseLinkArgs(RouteLink & link, const vector<string> & args)
+{
+	for (size_t i = 0; i < args.size(); i++) {
+		if (args[i] == "name" && i + 1 < args.size())
+			link.name(args[++i]);
+
+		else if (args[i] == "ifindex" && i + 1 < args.size())
+			link.ifindex(stoi(args[++i]));
+
+		else if (args[i] == "type" && i + 1 < args.size())
+			link.type(args[++i]);
+
+		else {
+			cerr << "unexpected link argument: " << args[i] << endl;
+			exit(1);
+		}
+	}
+}
+
 void linkList(const vector<string> &)
 {
 	RouteCacheManager mngr;
@@ -61,6 +80,19 @@ void linkList(const vector<string> &)
 		printLine(ss.str());
 	}
 	printLine("link-list-done");
+}
+
+void linkAdd(const vector<string> & args)
+{
+	RouteLink link;
+	parseLinkArgs(link, args);
+
+	nl::RouteSocket rsocket;
+	auto res = rsocket.add(link);
+
+	ostringstream ss;
+	ss << "link-add-done " << (res ? "true" : "false");
+	printLine(ss.str());
 }
 
 void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, const vector<string> & args)
@@ -163,6 +195,7 @@ void addressWatch(const vector<string> & args)
 
 vector<Command> commands = {
 	{ "link-list", linkList },
+	{ "link-add", linkAdd },
 	{ "address-list", addressList },
 	{ "address-add", addressAdd },
 	{ "address-del", addressDel },

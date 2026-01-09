@@ -8,6 +8,17 @@ test LinkList:
         /link-list-item [0-9]+ ${p.node.ifname}/
         /link-list-done/
 
+test LinkAdd:
+    spawn as p
+    with p:
+        send "link-add name test type dummy"
+        expect /link-add-done true/
+        send "link-list" to p
+        expect /link-list-item [0-9]+ test/
+        send "link-add name test type dummy"
+        expect /link-add-done false/
+
+
 test AddressList:
     spawn as p
 

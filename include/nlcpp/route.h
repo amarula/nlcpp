@@ -161,6 +161,11 @@ public:
 	/// Set operational status
 	RouteLink & operstate(uint8_t);
 
+	/// Get type of the link object
+	optional<string> type() const;
+	/// Set type of the link object
+	RouteLink & type(const string &);
+
 	/// Get the raw libnl rtnl_link pointer
 	rtnl_link * get() { return link; }
 	/// Get the raw libnl rtnl_link pointer
