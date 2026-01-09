@@ -3,10 +3,16 @@ module route
 test LinkList:
     spawn as p
     send "link-list" to p
+
+    # sit0 may be present depending on OS configuration
+    ignore from p matching /link-list-item [0-9]+ sit[0-9]+/
+
     expect from p:
         /link-list-item [0-9]+ lo/
         /link-list-item [0-9]+ ${p.node.ifname}/
-        /link-list-done/
+    local:
+        expect /link-list-(.*)/ from p capture done
+        guard (done == "done")
 
 test LinkAdd:
     spawn as p
@@ -17,6 +23,24 @@ test LinkAdd:
         expect /link-list-item [0-9]+ test/
         send "link-add name test type dummy"
         expect /link-add-done false/
+
+test LinkDelete:
+    spawn as p
+    with p:
+        send "link-del name ${p.node.ifname}"
+        expect /link-del-done true/
+
+        send "link-del name ${p.node.ifname}"
+        expect /link-del-done false/
+
+        send "link-list"
+        # sit0 may be present depending on OS configuration
+        ignore matching /link-list-item [0-9]+ sit[0-9]+/
+
+        expect /link-list-item [0-9]+ lo/
+        local:
+            expect /link-list-(.*)/ capture done
+            guard (done == "done")
 
 
 test AddressList:

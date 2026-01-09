@@ -95,6 +95,19 @@ void linkAdd(const vector<string> & args)
 	printLine(ss.str());
 }
 
+void linkDel(const vector<string> & args)
+{
+	RouteLink link;
+	parseLinkArgs(link, args);
+
+	nl::RouteSocket rsocket;
+	auto res = rsocket.del(link);
+
+	ostringstream ss;
+	ss << "link-del-done " << (res ? "true" : "false");
+	printLine(ss.str());
+}
+
 void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, const vector<string> & args)
 {
 	for (size_t i = 0; i < args.size(); i++) {
@@ -196,6 +209,7 @@ void addressWatch(const vector<string> & args)
 vector<Command> commands = {
 	{ "link-list", linkList },
 	{ "link-add", linkAdd },
+	{ "link-del", linkDel },
 	{ "address-list", addressList },
 	{ "address-add", addressAdd },
 	{ "address-del", addressDel },
