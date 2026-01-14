@@ -14,6 +14,22 @@ test LinkList:
         expect /link-list-(.*)/ from p capture done
         guard (done == "done")
 
+test LinkFilter:
+    spawn as p
+    local:
+        shell on p.node:
+            ip link add test1 type dummy
+            ip link add test2 type dummy
+            ip link add test3 type dummy
+    with p:
+        send "link-list type dummy"
+        expect:
+            /link-list-item [0-9]+ test1/
+            /link-list-item [0-9]+ test2/
+            /link-list-item [0-9]+ test3/
+        expect /link-list-(.*)/ capture done
+        guard (done == "done")
+
 test LinkAdd:
     spawn as p
     with p:

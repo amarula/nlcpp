@@ -348,6 +348,23 @@ public:
 
 	Iterator begin() const;
 	Iterator end() const;
+
+	class Filtered
+	{
+	public:
+		Filtered(const TypedCache<T> & cache, T && filter):
+			cache(cache), filter(std::move(filter)) {}
+
+		Iterator begin() const;
+		Iterator end() const;
+
+	private:
+		const TypedCache<T> & cache;
+		T filter;
+	};
+
+	/// Get iterable object listing addresses matching given filter
+	Filtered filter(T && filter) const;
 };
 
 extern template class TypedCache<RouteAddress>;
@@ -367,23 +384,6 @@ class RouteAddressCache : public TypedCache<RouteAddress>
 	friend class RouteCacheManager;
 
 public:
-	class Filtered
-	{
-	public:
-		Filtered(const RouteAddressCache & cache, RouteAddress && filter):
-			cache(cache), filter(std::move(filter)) {}
-
-		Iterator begin() const;
-		Iterator end() const;
-
-	private:
-		const RouteAddressCache & cache;
-		RouteAddress filter;
-	};
-
-	/// Get iterable object listing addresses matching given filter
-	Filtered filter(RouteAddress && filter) const;
-
 	void watch(function<void(const RouteAddress &, Action)> callback);
 
 protected:

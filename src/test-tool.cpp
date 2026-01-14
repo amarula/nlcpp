@@ -67,12 +67,15 @@ void parseLinkArgs(RouteLink & link, const vector<string> & args)
 	}
 }
 
-void linkList(const vector<string> &)
+void linkList(const vector<string> & args)
 {
 	RouteCacheManager mngr;
 	auto rcache = mngr.linkCache();
 
-	for (const auto & link : rcache) {
+	RouteLink filter;
+	parseLinkArgs(filter, args);
+
+	for (const auto & link : rcache.filter(move(filter))) {
 		ostringstream ss;
 		ss << "link-list-item " << link.ifindex();
 		if (const auto name = link.name())

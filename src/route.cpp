@@ -633,28 +633,31 @@ typename TypedCache<T>::Iterator TypedCache<T>::end() const
 	return Iterator(nullptr);
 }
 
-
-template class TypedCache<RouteAddress>;
-
-RouteAddressCache::Filtered RouteAddressCache::filter(RouteAddress && filter) const
+template<class T>
+TypedCache<T>::Filtered TypedCache<T>::filter(T && filter) const
 {
 	return Filtered(*this, move(filter));
 }
 
-void RouteAddressCache::watch(function<void(const RouteAddress &, Action)> callback)
-{
-	callbacks->push_back(callback);
-}
-
-RouteAddressCache::Iterator RouteAddressCache::Filtered::begin() const
+template<class T>
+TypedCache<T>::Iterator TypedCache<T>::Filtered::begin() const
 {
 	return Iterator(nl_cache_get_first(const_cast<nl_cache *>(cache.get())),
 			const_cast<nl_object *>(reinterpret_cast<const nl_object *>(filter.get())));
 }
 
-RouteAddressCache::Iterator RouteAddressCache::Filtered::end() const
+template<class T>
+TypedCache<T>::Iterator TypedCache<T>::Filtered::end() const
 {
 	return Iterator(nullptr);
+}
+
+
+template class TypedCache<RouteAddress>;
+
+void RouteAddressCache::watch(function<void(const RouteAddress &, Action)> callback)
+{
+	callbacks->push_back(callback);
 }
 
 
