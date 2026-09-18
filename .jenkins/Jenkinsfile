@@ -29,8 +29,9 @@ node('debian') {
       'Tests': {
         sh """#!/bin/bash -xe
           export LANG=C.UTF-8
-          erebos-tester --verbose
+          erebos-tester --verbose --junit-report=report.xml
         """
+        junit "report.xml"
       }],
       [dockerImage: dockerImage,
        dockerOptions: '--privileged'])
