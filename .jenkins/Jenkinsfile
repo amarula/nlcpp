@@ -1,0 +1,37 @@
+#!groovy
+
+@Library('ci_scripts')
+@Library('repo_jenkins_lib')
+import com.amarula.Common
+import com.amarula.build.Verification
+
+node('debian') {
+  def repoUrl = "${GERRIT_SSH_JENKINSBUILDER_URL}/amarula-library/nlcpp"
+  def dockerImage = 'nlcpp-builder:2.4'
+  def credentials = '9af8a985-9516-467e-b9cb-0174692fe8c0'
+  def ver = new Verification(this, env, credentials)
+
+  ver.build(repoUrl, [
+      'Build (g++)': {
+        sh """#!/bin/bash -xe
+          rm -rf build
+          cmake -B build -D CMAKE_CXX_COMPILER=g++ -D CMAKE_CXX_FLAGS="-Werror -Wno-deprecated-declarations"
+          cmake --build build
+        """
+      },
+      'Build (clang++)': {
+        sh """#!/bin/bash -xe
+          rm -rf build
+          cmake -B build -D CMAKE_CXX_COMPILER=clang++-19 -D CMAKE_CXX_FLAGS="-Werror -Wno-deprecated-declarations"
+          cmake --build build
+        """
+      },
+      'Tests': {
+        sh """#!/bin/bash -xe
+          export LANG=C.UTF-8
+          erebos-tester --verbose
+        """
+      }],
+      [dockerImage: dockerImage,
+       dockerOptions: '--privileged'])
+}
