@@ -43,9 +43,11 @@ RouteAddress::RouteAddress(RouteAddress && other)
 
 RouteAddress & RouteAddress::operator=(RouteAddress && other)
 {
-	rtnl_addr_put(addr);
-	addr = other.addr;
-	other.addr = nullptr;
+	if (this != &other) {
+		rtnl_addr_put(addr);
+		addr = other.addr;
+		other.addr = nullptr;
+	}
 	return *this;
 }
 
@@ -143,9 +145,11 @@ RouteLink::RouteLink(RouteLink && other)
 
 RouteLink & RouteLink::operator=(RouteLink && other)
 {
-	rtnl_link_put(link);
-	link = other.link;
-	other.link = nullptr;
+	if (this != &other) {
+		rtnl_link_put(link);
+		link = other.link;
+		other.link = nullptr;
+	}
 	return *this;
 }
 
@@ -253,11 +257,13 @@ NextHop::NextHop(const NextHop & other):
 
 NextHop & NextHop::operator=(const NextHop & other)
 {
-	if (nexthop)
-		rtnl_route_nh_free(nexthop);
-	nexthop = rtnl_route_nh_clone(other.nexthop);
-	if (!nexthop)
-		throw std::runtime_error("Failed to clone route netlink nexthop");
+	if (this != &other) {
+		if (nexthop)
+			rtnl_route_nh_free(nexthop);
+		nexthop = rtnl_route_nh_clone(other.nexthop);
+		if (!nexthop)
+			throw std::runtime_error("Failed to clone route netlink nexthop");
+	}
 	return *this;
 }
 
@@ -269,10 +275,12 @@ NextHop::NextHop(NextHop && other)
 
 NextHop & NextHop::operator=(NextHop && other)
 {
-	if (nexthop)
-		rtnl_route_nh_free(nexthop);
-	nexthop = other.nexthop;
-	other.nexthop = nullptr;
+	if (this != &other) {
+		if (nexthop)
+			rtnl_route_nh_free(nexthop);
+		nexthop = other.nexthop;
+		other.nexthop = nullptr;
+	}
 	return *this;
 }
 
@@ -359,9 +367,11 @@ Route::Route(Route && other)
 
 Route & Route::operator=(Route && other)
 {
-	rtnl_route_put(route);
-	route = other.route;
-	other.route = nullptr;
+	if (this != &other) {
+		rtnl_route_put(route);
+		route = other.route;
+		other.route = nullptr;
+	}
 	return *this;
 }
 

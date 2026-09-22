@@ -164,8 +164,10 @@ Address::Address(const Address & other):
 
 Address & Address::operator=(const Address & other)
 {
-	nl_addr_put(addr);
-	addr = nl_addr_clone(other.addr);
+	if (this != &other) {
+		nl_addr_put(addr);
+		addr = nl_addr_clone(other.addr);
+	}
 	return *this;
 }
 
@@ -177,9 +179,11 @@ Address::Address(Address && other)
 
 Address & Address::operator=(Address && other)
 {
-	nl_addr_put(addr);
-	addr = other.addr;
-	other.addr = nullptr;
+	if (this != &other) {
+		nl_addr_put(addr);
+		addr = other.addr;
+		other.addr = nullptr;
+	}
 	return *this;
 }
 
@@ -256,9 +260,11 @@ Cache::Cache(const Cache & other):
 
 Cache & Cache::operator=(const Cache & other)
 {
-	nl_cache_put(cache);
-	cache = other.cache;
-	nl_cache_get(cache);
+	if (this != &other) {
+		nl_cache_put(cache);
+		cache = other.cache;
+		nl_cache_get(cache);
+	}
 	return *this;
 }
 
@@ -270,9 +276,11 @@ Cache::Cache(Cache && other):
 
 Cache & Cache::operator=(Cache && other)
 {
-	nl_cache_put(cache);
-	cache = other.cache;
-	other.cache = nullptr;
+	if (this != &other) {
+		nl_cache_put(cache);
+		cache = other.cache;
+		other.cache = nullptr;
+	}
 	return *this;
 }
 

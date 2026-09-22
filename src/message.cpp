@@ -31,9 +31,11 @@ Message::Message(Message && other)
 
 Message & Message::operator=(Message && other)
 {
-	nlmsg_free(msg);
-	msg = other.msg;
-	other.msg = nullptr;
+	if (this != &other) {
+		nlmsg_free(msg);
+		msg = other.msg;
+		other.msg = nullptr;
+	}
 	return *this;
 }
 
