@@ -91,6 +91,17 @@ RouteAddress & RouteAddress::family(int family)
 	return *this;
 }
 
+unsigned int RouteAddress::prefixlen() const
+{
+	return rtnl_addr_get_prefixlen(addr);
+}
+
+RouteAddress & RouteAddress::prefixlen(unsigned int value)
+{
+	rtnl_addr_set_prefixlen(addr, value);
+	return *this;
+}
+
 RouteScope RouteAddress::scope() const
 {
 	return static_cast<RouteScope>(rtnl_addr_get_scope(addr));

@@ -10,6 +10,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using std::cerr;
@@ -111,8 +112,9 @@ void linkDel(const vector<string> & args)
 	printLine(ss.str());
 }
 
-void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, const vector<string> & args)
+vector<string> parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, const vector<string> & args)
 {
+	vector<string> fields {};
 	for (size_t i = 0; i < args.size(); i++) {
 		if (args[i] == "family" && i + 1 < args.size()) {
 			const auto & family = args[i + 1];
@@ -129,10 +131,22 @@ void parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress & addr, con
 			i++;
 		}
 
+		else if (args[i] == "prefixlen" && i + 1 < args.size()) {
+			addr.prefixlen(stoi(args[i + 1]));
+			i++;
+		}
+
+		else if (args[i] == "fields" && i + 1 < args.size()) {
+			for (const auto & field : args[i + 1] | std::views::split(','))
+				fields.emplace_back(field.begin(), field.end());
+			i++;
+		}
+
 		else {
 			addr.local(Address(args[i]));
 		}
 	}
+	return fields;
 }
 
 void addressList(const vector<string> & args)
@@ -141,11 +155,19 @@ void addressList(const vector<string> & args)
 	auto rcache = mngr.addressCache();
 
 	RouteAddress filter;
-	parseAddressArgs(mngr.linkCache(), filter, args);
+	auto fields = parseAddressArgs(mngr.linkCache(), filter, args);
+	if (fields.empty())
+		fields.push_back("local");
 
 	for (const auto & addr : rcache.filter(move(filter))) {
 		ostringstream ss;
-		ss << "address-list-item " << string(addr.local());
+		ss << "address-list-item";
+		for (const auto & field : fields) {
+			if (field == "local")
+				ss << " " << string(addr.local());
+			else if (field == "prefixlen")
+				ss << " " << addr.prefixlen();
+		}
 		printLine(ss.str());
 	}
 	printLine("address-list-done");

@@ -101,6 +101,11 @@ public:
 	/// Set address family
 	RouteAddress & family(int family);
 
+	/// Get prefix length
+	unsigned int prefixlen() const;
+	/// Set prefix length
+	RouteAddress & prefixlen(unsigned int value);
+
 	/// Get scope
 	RouteScope scope() const;
 	/// Set scope

@@ -104,9 +104,15 @@ test AddressChange:
             expect /address-add-done true/
             send "address-add dev ${p.node.ifname} $addr"
             expect /address-add-done false/
-        send "address-list dev ${p.node.ifname}"
+
+        send "address-add dev ${p.node.ifname} 2002:abcd::43 prefixlen 56"
+        expect /address-add-done true/
+
+        send "address-list dev ${p.node.ifname} fields local,prefixlen"
         for addr in addrs:
-            expect /address-list-item $addr/
+            expect /address-list-item $addr [0-9]+/
+        expect /address-list-item 2002:abcd::43\/56 56/
+
         expect /address-list-item fe80:.*/
         local:
             expect /address-list-(.*)/ capture done
