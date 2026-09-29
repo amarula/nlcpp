@@ -113,14 +113,108 @@ RouteAddress & RouteAddress::scope(RouteScope value)
 	return *this;
 }
 
-Address RouteAddress::local() const
+optional<Address> RouteAddress::local() const
 {
-	return Address(rtnl_addr_get_local(addr), create_copy_from_pointer);
+	if (auto * ptr = rtnl_addr_get_local(addr))
+		return Address(ptr, create_copy_from_pointer);
+	return nullopt;
 }
 
 RouteAddress & RouteAddress::local(const Address & laddr)
 {
-	rtnl_addr_set_local(addr, Address(laddr).get());
+	int err = rtnl_addr_set_local(addr, Address(laddr).get());
+	Exception::throwCode("failed to set local address", err);
+	return *this;
+}
+
+RouteAddress & RouteAddress::local(const optional<Address> & laddr)
+{
+	int err = rtnl_addr_set_local(addr, laddr ? Address(*laddr).get() : nullptr);
+	Exception::throwCode("failed to set local address", err);
+	return *this;
+}
+
+optional<Address> RouteAddress::peer() const
+{
+	if (auto * ptr = rtnl_addr_get_peer(addr))
+		return Address(ptr, create_copy_from_pointer);
+	return nullopt;
+}
+
+RouteAddress & RouteAddress::peer(const Address & laddr)
+{
+	int err = rtnl_addr_set_peer(addr, Address(laddr).get());
+	Exception::throwCode("failed to set peer address", err);
+	return *this;
+}
+
+RouteAddress & RouteAddress::peer(const optional<Address> & laddr)
+{
+	int err = rtnl_addr_set_peer(addr, laddr ? Address(*laddr).get() : nullptr);
+	Exception::throwCode("failed to set peer address", err);
+	return *this;
+}
+
+optional<Address> RouteAddress::broadcast() const
+{
+	if (auto * ptr = rtnl_addr_get_broadcast(addr))
+		return Address(ptr, create_copy_from_pointer);
+	return nullopt;
+}
+
+RouteAddress & RouteAddress::broadcast(const Address & laddr)
+{
+	int err = rtnl_addr_set_broadcast(addr, Address(laddr).get());
+	Exception::throwCode("failed to set broadcast address", err);
+	return *this;
+}
+
+RouteAddress & RouteAddress::broadcast(const optional<Address> & laddr)
+{
+	int err = rtnl_addr_set_broadcast(addr, laddr ? Address(*laddr).get() : nullptr);
+	Exception::throwCode("failed to set broadcast address", err);
+	return *this;
+}
+
+optional<Address> RouteAddress::multicast() const
+{
+	if (auto * ptr = rtnl_addr_get_multicast(addr))
+		return Address(ptr, create_copy_from_pointer);
+	return nullopt;
+}
+
+RouteAddress & RouteAddress::multicast(const Address & laddr)
+{
+	int err = rtnl_addr_set_multicast(addr, Address(laddr).get());
+	Exception::throwCode("failed to set multicast address", err);
+	return *this;
+}
+
+RouteAddress & RouteAddress::multicast(const optional<Address> & laddr)
+{
+	int err = rtnl_addr_set_multicast(addr, laddr ? Address(*laddr).get() : nullptr);
+	Exception::throwCode("failed to set multicast address", err);
+	return *this;
+}
+
+optional<Address> RouteAddress::anycast() const
+{
+	if (auto * ptr = rtnl_addr_get_anycast(addr))
+		return Address(ptr, create_copy_from_pointer);
+	return nullopt;
+}
+
+RouteAddress & RouteAddress::anycast(const Address & laddr)
+{
+	int err = rtnl_addr_set_anycast(addr, Address(laddr).get());
+	Exception::throwCode("failed to set anycast address", err);
+	return *this;
+}
+
+RouteAddress & RouteAddress::anycast(const optional<Address> & laddr)
+{
+	int err = rtnl_addr_set_anycast(addr, laddr ? Address(*laddr).get() : nullptr);
+	Exception::throwCode("failed to set anycast address", err);
 	return *this;
 }
 

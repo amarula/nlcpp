@@ -112,9 +112,39 @@ public:
 	RouteAddress & scope(RouteScope value);
 
 	/// Get local address
-	Address local() const;
+	optional<Address> local() const;
 	/// Set local address
 	RouteAddress & local(const Address &);
+	/// Set or clear local address
+	RouteAddress & local(const optional<Address> &);
+
+	/// Get peer address
+	optional<Address> peer() const;
+	/// Set peer address
+	RouteAddress & peer(const Address &);
+	/// Set or clear peer address
+	RouteAddress & peer(const optional<Address> &);
+
+	/// Get broadcast address
+	optional<Address> broadcast() const;
+	/// Set broadcast address
+	RouteAddress & broadcast(const Address &);
+	/// Set or clear broadcast address
+	RouteAddress & broadcast(const optional<Address> &);
+
+	/// Get multicast address
+	optional<Address> multicast() const;
+	/// Set multicast address
+	RouteAddress & multicast(const Address &);
+	/// Set or clear multicast address
+	RouteAddress & multicast(const optional<Address> &);
+
+	/// Get anycast address
+	optional<Address> anycast() const;
+	/// Set anycast address
+	RouteAddress & anycast(const Address &);
+	/// Set or clear anycast address
+	RouteAddress & anycast(const optional<Address> &);
 
 	/// Get the raw libnl rtnl_addr pointer
 	const rtnl_addr * get() const { return addr; }

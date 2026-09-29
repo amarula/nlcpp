@@ -149,6 +149,11 @@ vector<string> parseAddressArgs(const RouteLinkCache & linkCache, RouteAddress &
 	return fields;
 }
 
+string showAddress(const optional<Address> & addr)
+{
+	return addr ? string(*addr) : "none";
+}
+
 void addressList(const vector<string> & args)
 {
 	RouteCacheManager mngr;
@@ -164,7 +169,15 @@ void addressList(const vector<string> & args)
 		ss << "address-list-item";
 		for (const auto & field : fields) {
 			if (field == "local")
-				ss << " " << string(addr.local());
+				ss << " " << showAddress(addr.local());
+			if (field == "peer")
+				ss << " " << showAddress(addr.peer());
+			if (field == "broadcast")
+				ss << " " << showAddress(addr.broadcast());
+			if (field == "multicast")
+				ss << " " << showAddress(addr.multicast());
+			if (field == "anycast")
+				ss << " " << showAddress(addr.anycast());
 			else if (field == "prefixlen")
 				ss << " " << addr.prefixlen();
 		}
@@ -221,7 +234,7 @@ void addressWatch(const vector<string> & args)
 		default: ss << "unknown"; break;
 		}
 
-		ss << " " << string(addr.local());
+		ss << " " << showAddress(addr.local());
 		printLine(ss.str());
 	});
 
