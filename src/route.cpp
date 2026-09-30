@@ -5,11 +5,15 @@
 
 #include <stdexcept>
 
+#include "utils.inl"
+
 using std::make_unique;
 using std::move;
 using std::nullopt;
 
 namespace nl {
+
+template class GenericFlags<RouteAddress>;
 
 RouteAddress::RouteAddress():
 	addr { rtnl_addr_alloc() }
@@ -110,6 +114,23 @@ RouteScope RouteAddress::scope() const
 RouteAddress & RouteAddress::scope(RouteScope value)
 {
 	rtnl_addr_set_scope(addr, static_cast<int>(value));
+	return *this;
+}
+
+RouteAddress::Flags RouteAddress::getFlags() const
+{
+	return rtnl_addr_get_flags(addr);
+}
+
+RouteAddress & RouteAddress::setFlags(RouteAddress::Flags value)
+{
+	rtnl_addr_set_flags(addr, value);
+	return *this;
+}
+
+RouteAddress & RouteAddress::unsetFlags(RouteAddress::Flags value)
+{
+	rtnl_addr_unset_flags(addr, value);
 	return *this;
 }
 
@@ -218,6 +239,19 @@ RouteAddress & RouteAddress::anycast(const optional<Address> & laddr)
 	return *this;
 }
 
+char * RouteAddress::flags2str(int value, char * buf, size_t size)
+{
+	return rtnl_addr_flags2str(value, buf, size);
+}
+
+int RouteAddress::str2flags(const char * str)
+{
+	return rtnl_addr_str2flags(str);
+}
+
+
+template class GenericFlags<RouteLink>;
+
 RouteLink::RouteLink():
 	link { rtnl_link_alloc() }
 {
@@ -276,18 +310,18 @@ RouteLink & RouteLink::name(const string & value)
 	return *this;
 }
 
-unsigned int RouteLink::getFlags() const
+RouteLink::Flags RouteLink::getFlags() const
 {
 	return rtnl_link_get_flags(link);
 }
 
-RouteLink & RouteLink::setFlags(unsigned int value)
+RouteLink & RouteLink::setFlags(RouteLink::Flags value)
 {
 	rtnl_link_set_flags(link, value);
 	return *this;
 }
 
-RouteLink & RouteLink::unsetFlags(unsigned int value)
+RouteLink & RouteLink::unsetFlags(RouteLink::Flags value)
 {
 	rtnl_link_unset_flags(link, value);
 	return *this;
@@ -326,6 +360,16 @@ RouteLink & RouteLink::type(const string & value)
 {
 	rtnl_link_set_type(link, value.c_str());
 	return *this;
+}
+
+char * RouteLink::flags2str(int value, char * buf, size_t size)
+{
+	return rtnl_link_flags2str(value, buf, size);
+}
+
+int RouteLink::str2flags(const char * str)
+{
+	return rtnl_link_str2flags(str);
 }
 
 

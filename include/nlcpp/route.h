@@ -5,6 +5,7 @@
 #pragma once
 
 #include <nlcpp/netlink.h>
+#include <nlcpp/utils.h>
 
 #include <linux/rtnetlink.h>
 
@@ -83,6 +84,7 @@ public:
 	~RouteAddress();
 
 	using RawType = rtnl_addr;
+	using Flags = GenericFlags<RouteAddress>;
 
 	explicit operator bool() const { return bool(addr); }
 
@@ -110,6 +112,13 @@ public:
 	RouteScope scope() const;
 	/// Set scope
 	RouteAddress & scope(RouteScope value);
+
+	/// Get flags of the address object
+	Flags getFlags() const;
+	/// Set flags of the address object
+	RouteAddress & setFlags(Flags);
+	/// Unset flags of the address object
+	RouteAddress & unsetFlags(Flags);
 
 	/// Get local address
 	optional<Address> local() const;
@@ -152,6 +161,10 @@ public:
 	rtnl_addr * get() { return addr; }
 
 private:
+	friend Flags;
+	static char * flags2str(int, char *, size_t);
+	static int str2flags(const char *);
+
 	rtnl_addr * addr;
 };
 
@@ -171,6 +184,7 @@ public:
 	~RouteLink();
 
 	using RawType = rtnl_link;
+	using Flags = GenericFlags<RouteLink>;
 
 	explicit operator bool() const { return bool(link); }
 
@@ -180,11 +194,11 @@ public:
 	RouteLink & name(const string &);
 
 	/// Get flags of the link object
-	unsigned int getFlags() const;
+	Flags getFlags() const;
 	/// Set flags of the link object
-	RouteLink & setFlags(unsigned int);
+	RouteLink & setFlags(Flags);
 	/// Unset flags of the link object
-	RouteLink & unsetFlags(unsigned int);
+	RouteLink & unsetFlags(Flags);
 
 	/// Get interface index of the link object, or 0 if not set
 	int ifindex() const;
@@ -207,6 +221,10 @@ public:
 	const rtnl_link * get() const { return link; }
 
 private:
+	friend Flags;
+	static char * flags2str(int, char *, size_t);
+	static int str2flags(const char *);
+
 	rtnl_link * link;
 };
 
