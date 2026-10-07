@@ -9,6 +9,7 @@
 
 #include <linux/rtnetlink.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
@@ -26,6 +27,8 @@ using std::optional;
 using std::string;
 using std::unique_ptr;
 using std::vector;
+
+namespace chrono = std::chrono;
 
 enum class RouteScope
 {
@@ -154,6 +157,22 @@ public:
 	RouteAddress & anycast(const Address &);
 	/// Set or clear anycast address
 	RouteAddress & anycast(const optional<Address> &);
+
+	/// Get valid lifetime in seconds
+	optional<chrono::seconds> validLifetime() const;
+	/// Set valid lifetime in seconds
+	RouteAddress & validLifetime(chrono::seconds value);
+
+	/// Get preferred lifetime in seconds
+	optional<chrono::seconds> preferredLifetime() const;
+	/// Set preferred lifetime in seconds
+	RouteAddress & preferredLifetime(chrono::seconds value);
+
+	/// Get timestamp of creation in 1/100s since boottime, clock_gettime(CLOCK_MONOTONIC)
+	chrono::duration<uint32_t, std::centi> createTime() const;
+
+	/// Get timestamp of last update in 1/100s since boottime, clock_gettime(CLOCK_MONOTONIC)
+	chrono::duration<uint32_t, std::centi> lastUpdateTime() const;
 
 	/// Get the raw libnl rtnl_addr pointer
 	const rtnl_addr * get() const { return addr; }

@@ -239,6 +239,44 @@ RouteAddress & RouteAddress::anycast(const optional<Address> & laddr)
 	return *this;
 }
 
+optional<chrono::seconds> RouteAddress::validLifetime() const
+{
+	uint32_t sec = rtnl_addr_get_valid_lifetime(addr);
+	if (sec == 0xFFFFFFFF)
+		return nullopt;
+	return chrono::seconds { sec };
+}
+
+RouteAddress & RouteAddress::validLifetime(chrono::seconds value)
+{
+	rtnl_addr_set_valid_lifetime(addr, value.count());
+	return *this;
+}
+
+optional<chrono::seconds> RouteAddress::preferredLifetime() const
+{
+	uint32_t sec = rtnl_addr_get_preferred_lifetime(addr);
+	if (sec == 0xFFFFFFFF)
+		return nullopt;
+	return chrono::seconds { sec };
+}
+
+RouteAddress & RouteAddress::preferredLifetime(chrono::seconds value)
+{
+	rtnl_addr_set_preferred_lifetime(addr, value.count());
+	return *this;
+}
+
+chrono::duration<uint32_t, std::centi> RouteAddress::createTime() const
+{
+	return chrono::duration<uint32_t, std::centi> { rtnl_addr_get_create_time(addr) };
+}
+
+chrono::duration<uint32_t, std::centi> RouteAddress::lastUpdateTime() const
+{
+	return chrono::duration<uint32_t, std::centi> { rtnl_addr_get_last_update_time(addr) };
+}
+
 char * RouteAddress::flags2str(int value, char * buf, size_t size)
 {
 	return rtnl_addr_flags2str(value, buf, size);
